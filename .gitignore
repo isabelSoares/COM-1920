@@ -28,3 +28,6 @@
 *.app
 
 .dropbox.attr
+
+src_cvs
+update_cvs.sh
