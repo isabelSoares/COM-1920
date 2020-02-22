@@ -1,2 +1,5 @@
 src_cvs
 update_cvs.sh
+libcdk
+librts
+examples
