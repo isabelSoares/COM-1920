@@ -23,7 +23,8 @@
 %token <i> tINTEGER
 %token <r> tREAL
 %token <s> tIDENTIFIER tSTRING
-%token tFOR tIF tPRINT tINPUT
+%token tFOR tIF tPRINT tINPUT tTHEN tDO
+%token tPUBLIC tREQUIRE tRETURN tPRINT tPOINTER tAUTO tWRITE tWRITELN tBREAK tCONTINUE tELIF tPROCEDURE
 
 %nonassoc tIFX
 %nonassoc tELSE
@@ -35,7 +36,7 @@
 %nonassoc tUNARY
 
 %type <node> stmt program
-%type <sequence> list
+%type <sequence> list exps vars
 %type <expression> expr
 %type <lvalue> lval
 
@@ -57,26 +58,21 @@ stmt : expr ';'                                       { $$ = new og::evaluation_
  	| tBREAK exps ';'                                { $$ = new og::break_node(LINE, $2); }
  	| tCONTINUE exps ';'                             { $$ = new og::continue_node(LINE, $2); }
  	| tRETURN exps ';'                               { $$ = new og::return_node(LINE, $2); }
-     | tIF expr tTHEN stmt                            { $$ = new og::if_node(LINE, $3, $5); }
+     | tIF expr tTHEN stmt                            { $$ = new og::if_node(LINE, $2, $4); }
      | tIF expr stmt mid_conditional tELSE stmt       { /* TODO */ }
-     | tIF expr stmt tELSE stmt                       { $$ = new og::if_else_node(LINE, $3, $5, $7); }
-     | tFOR '(' exps ';' exps ';' exps ')' tDO stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $9); }
-     | tFOR '(' vars ';' exps ';' exps ')' tDO stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $9); }
+     | tIF expr tTHEN stmt tELSE stmt                 { $$ = new og::if_else_node(LINE, $2, $4, $6); }
+     | tFOR '(' exps ';' exps ';' exps ')' tDO stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $10); }
+     | tFOR '(' vars ';' exps ';' exps ')' tDO stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $10); }
      | '{' list '}'                                   { $$ = $2; }
      ;
 
 mid_conditional     : tELIF expr tTHEN stmt                           { /* TODO */ }
                     | mid_conditional tELIF expr tTHEN stmt           { /* TODO */ }
                     ;
-
-ids  : id                                              { $$ = new cdk::sequence_node(LINE, $1)}
-     | id ',' id                                       { $$ = new cdk::sequence_node(LINE, $1, $3)}
-
-vars : var                                             { $$ = new cdk::sequence_node(LINE, $1)}
-     | var ',' var                                     { $$ = new cdk::sequence_node(LINE, $1, $3)}
      
 exps : expr                                            { $$ = new cdk::sequence_node(LINE, $1)}
      | expr ',' expr                                   { $$ = new cdk::sequence_node(LINE, $1, $3)}
+     ;
 
 expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
 	   | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
