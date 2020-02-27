@@ -23,8 +23,7 @@
 
 "for"                  return tFOR; 
 "if"                   return tIF; 
-"else"                 return tELSE; 
-"print"                return tPRINT;
+"else"                 return tELSE;
 "input"                return tINPUT; 
 
 "do"                   return tDO;
@@ -37,12 +36,12 @@
 "return"               return tRETURN;
 "public"               return tPUBLIC;
 "require"              return tREQUIRE;
-"auto"                 return tAUTO;
 "procedure"            return tPROCEDURE;
 
 "int"                  return tINTEGER;
 "real"                 return tREAL;
 "string"               return tSTRING;
+"auto"                 return tAUTO;
 "ptr"                  return tPOINTER;
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
