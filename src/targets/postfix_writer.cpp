@@ -235,6 +235,7 @@ void og::postfix_writer::do_read_node(og::read_node * const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
+/* CLEAN
 void og::postfix_writer::do_while_node(og::while_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   int lbl1, lbl2;
@@ -244,7 +245,7 @@ void og::postfix_writer::do_while_node(og::while_node * const node, int lvl) {
   node->block()->accept(this, lvl + 2);
   _pf.JMP(mklbl(lbl1));
   _pf.LABEL(mklbl(lbl2));
-}
+}*/
 
 //---------------------------------------------------------------------------
 

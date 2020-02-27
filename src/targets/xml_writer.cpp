@@ -160,6 +160,7 @@ void og::xml_writer::do_read_node(og::read_node * const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
+/* CLEAN
 void og::xml_writer::do_while_node(og::while_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
@@ -170,7 +171,7 @@ void og::xml_writer::do_while_node(og::while_node * const node, int lvl) {
   node->block()->accept(this, lvl + 4);
   closeTag("block", lvl + 2);
   closeTag(node, lvl);
-}
+}*/
 
 //---------------------------------------------------------------------------
 

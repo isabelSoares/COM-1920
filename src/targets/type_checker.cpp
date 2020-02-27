@@ -177,9 +177,11 @@ void og::type_checker::do_read_node(og::read_node *const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
+/* CLEAN
 void og::type_checker::do_while_node(og::while_node *const node, int lvl) {
   node->condition()->accept(this, lvl + 4);
 }
+*/
 
 //---------------------------------------------------------------------------
 
