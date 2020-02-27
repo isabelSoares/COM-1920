@@ -24,10 +24,26 @@
 "for"                  return tFOR; 
 "if"                   return tIF; 
 "else"                 return tELSE; 
-"print"                return tPRINT; 
-"read"                 return tREAD; 
-"begin"                return tBEGIN; 
-"end"                  return tEND; 
+"print"                return tPRINT;
+"input"                return tINPUT; 
+
+"do"                   return tDO;
+"then"                 return tTHEN;
+"elif"                 return tELIF;
+"write"                return tWRITE;
+"writeln"              return tWRITELN;
+"break"                return tBREAK;
+"continue"             return tCONTINUE;
+"return"               return tRETURN;
+"public"               return tPUBLIC;
+"require"              return tREQUIRE;
+"auto"                 return tAUTO;
+"procedure"            return tPROCEDURE;
+
+"int"                  return tINTEGER;
+"real"                 return tREAL;
+"string"               return tSTRING;
+"ptr"                  return tPOINTER;
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
