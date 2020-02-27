@@ -12,6 +12,7 @@
 
 %union {
   int                   i;	/* integer value */
+  double               r;
   std::string          *s;	/* symbol name or string literal */
   cdk::basic_node      *node;	/* node pointer */
   cdk::sequence_node   *sequence;
@@ -20,8 +21,9 @@
 };
 
 %token <i> tINTEGER
+%token <r> tREAL
 %token <s> tIDENTIFIER tSTRING
-%token tFOR tIF tPRINT tREAD tBEGIN tEND
+%token tFOR tIF tPRINT tINPUT
 
 %nonassoc tIFX
 %nonassoc tELSE
@@ -46,18 +48,26 @@ program	: tBEGIN list tEND { compiler->ast(new og::program_node(LINE, $2)); }
 	      ;
 
 list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
-	   | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
-	   ;
+	| list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
+	;
 
-stmt : expr ';'                                   { $$ = new og::evaluation_node(LINE, $1); }
- 	| tPRINT expr ';'                            { $$ = new og::print_node(LINE, $2); }
-     | tREAD lval ';'                             { $$ = new og::read_node(LINE, $2); }
-     | tFOR '(' exps ';' exps ';' exps ')' stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $9); }
-     | tFOR '(' vars ';' exps ';' exps ')' stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $9); }
-     | tIF '(' expr ')' stmt %prec tIFX           { $$ = new og::if_node(LINE, $3, $5); }
-     | tIF '(' expr ')' stmt tELSE stmt           { $$ = new og::if_else_node(LINE, $3, $5, $7); }
-     | '{' list '}'                               { $$ = $2; }
+stmt : expr ';'                                       { $$ = new og::evaluation_node(LINE, $1); }
+ 	| tWRITE exps ';'                                { $$ = new og::write_node(LINE, $2); }
+ 	| tWRITELN exps ';'                              { $$ = new og::writeln_node(LINE, $2); }
+ 	| tBREAK exps ';'                                { $$ = new og::break_node(LINE, $2); }
+ 	| tCONTINUE exps ';'                             { $$ = new og::continue_node(LINE, $2); }
+ 	| tRETURN exps ';'                               { $$ = new og::return_node(LINE, $2); }
+     | tIF expr tTHEN stmt                            { $$ = new og::if_node(LINE, $3, $5); }
+     | tIF expr stmt mid_conditional tELSE stmt       { /* TODO */ }
+     | tIF expr stmt tELSE stmt                       { $$ = new og::if_else_node(LINE, $3, $5, $7); }
+     | tFOR '(' exps ';' exps ';' exps ')' tDO stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $9); }
+     | tFOR '(' vars ';' exps ';' exps ')' tDO stmt   { $$ = new og::for_node(LINE, $3, $5, $7, $9); }
+     | '{' list '}'                                   { $$ = $2; }
      ;
+
+mid_conditional     : tELIF expr tTHEN stmt                           { /* TODO */ }
+                    | mid_conditional tELIF expr tTHEN stmt           { /* TODO */ }
+                    ;
 
 ids  : id                                              { $$ = new cdk::sequence_node(LINE, $1)}
      | id ',' id                                       { $$ = new cdk::sequence_node(LINE, $1, $3)}
