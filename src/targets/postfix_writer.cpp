@@ -248,6 +248,12 @@ void og::postfix_writer::do_while_node(og::while_node * const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
+void og::postfix_writer::do_for_node(og::for_node *const node, int lvl) {
+  // EMPTY
+}
+
+//---------------------------------------------------------------------------
+
 void og::postfix_writer::do_if_node(og::if_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   int lbl1;
