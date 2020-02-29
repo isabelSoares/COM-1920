@@ -24,7 +24,8 @@
 %token <r>          tREAL
 %token <s>          tIDENTIFIER tSTRING
 %token              tFOR tIF tPRINT tINPUT
-%token              tTHEN tDO tPUBLIC tREQUIRE tRETURN tPRINT tPOINTER tAUTO tWRITE tWRITELN tBREAK tCONTINUE tELIF tPROCEDURE
+%token              tTHEN tDO tPUBLIC tREQUIRE tRETURN tPRINT tPOINTER tWRITE tWRITELN tBREAK tCONTINUE tELIF tPROCEDURE
+%token              tINTTAG tREALTAG tSTRINGTAG tAUTOTAG tPOINTERTAG
 
 %nonassoc           tIFX
 %nonassoc           tELSE
@@ -35,8 +36,8 @@
 %left               '*' '/' '%'
 %nonassoc           tUNARY
 
-%type <node>        instr program inst_condit inst_iter function procedure identifier
-%type <sequence>    block exps vars
+%type <node>        instr program inst_condit inst_iter function procedure identifier declaration
+%type <sequence>    block exps vars declarations instrs
 %type <expression>  expr
 %type <lvalue>      lval var
 
@@ -45,16 +46,17 @@
 %}
 %%
 
-program	     : declarations                                    { /* TODO */ }
-	          ;
+program	       : declaration declarations                          { /* TODO */ }
+	             ;
 
 /* Extra to be easier. */
-declarations   : declarations declaration                        { /* TODO */ }
+declarations   : declaration                                       { /* TODO */ }
+               | declarations declaration                          { $$ = new cdk::sequence_node(LINE, $2, $1); }
                ;
 
-declaration    : var ';'                                         { /* TODO */ }
-               | function                                        { /* TODO */ }
-               | procedure                                       { /* TODO */ }
+declaration    : var ';'                                           { /* TODO */ }
+               | function                                          { /* TODO */ }
+               | procedure                                         { /* TODO */ }
                ;
 
 var            :
@@ -63,7 +65,20 @@ var            :
 function       :
                ;
 
-procedure      :
+/* Extra to be easier. */
+pre_proc       : /* EMPTY */                                      { /* TODO */ }
+               | tPUBLIC                                          { /* TODO */ }
+               | tREQUIRE                                         { /* TODO */ }
+               ;
+
+/* Extra to be easier. */
+pos_proc       : '(' ')'
+               | '(' ')' block
+               | '(' vars ')'
+               | '(' vars ')' block
+               ;
+
+procedure      : pre_proc tPROCEDURE identifier '(' ')' pos_proc  { /* TODO */ }
                ;
 
 identifier     :
@@ -73,19 +88,31 @@ exps           : expr                                            { $$ = new cdk:
                | exps ',' expr                                   { $$ = new cdk::sequence_node(LINE, $3, $1); }
                ;
 
-vars           : var                                            { $$ = new cdk::sequence_node(LINE, $1); }
-               | vars ',' var                                   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+vars           : var                                             { $$ = new cdk::sequence_node(LINE, $1); }
+               | vars ',' var                                    { $$ = new cdk::sequence_node(LINE, $3, $1); }
                ;
 
-type           :
+type           : tINTTAG                                         { /* TODO */ }
+               | tREALTAG                                        { /* TODO */ }
+               | tSTRINGTAG                                      { /* TODO */ }
+               | tAUTOTAG '<' '(' tAUTOTAG ')' '>'               { /* TODO */ }
+               | tAUTOTAG '<' '(' type ')' '>'                   { /* TODO */ }
                ;
 
-block          :
+block          : '{' declarations instrs '}'                     { /* TODO */ }
+               ;
+
+/* Extra to be easier. */
+instrs         : instr                                           { /* TODO */ }
+               | instrs instr                                    { $$ = new cdk::sequence_node(LINE, $2, $1); }
                ;
 
 instr          : expr ';'                                        { $$ = new og::evaluation_node(LINE, $1); }
                | tWRITE exps ';'                                 { /* TODO */ }
                | tWRITELN exps ';'                               { /* TODO */ }
+               | tBREAK ';'                                      { /* TODO */ }
+               | tCONTINUE ';'                                   { /* TODO */ }
+               | tRETURN ';'                                     { /* TODO */ }
                | tBREAK exps ';'                                 { /* TODO */ }
                | tCONTINUE exps ';'                              { /* TODO */ }
                | tRETURN exps ';'                                { /* TODO */ }
@@ -112,17 +139,17 @@ inst_iter      : tFOR '(' exps ';' exps ';' exps ')' tDO instr   { $$ = new og::
 expr           : tINTEGER                                        { $$ = new cdk::integer_node(LINE, $1); }
                | tSTRING                                         { $$ = new cdk::string_node(LINE, $1); }
                | '-' expr %prec tUNARY                           { $$ = new cdk::neg_node(LINE, $2); }
-               | expr '+' expr	                              { $$ = new cdk::add_node(LINE, $1, $3); }
-               | expr '-' expr	                              { $$ = new cdk::sub_node(LINE, $1, $3); }
-               | expr '*' expr	                              { $$ = new cdk::mul_node(LINE, $1, $3); }
-               | expr '/' expr	                              { $$ = new cdk::div_node(LINE, $1, $3); }
-               | expr '%' expr	                              { $$ = new cdk::mod_node(LINE, $1, $3); }
-               | expr '<' expr	                              { $$ = new cdk::lt_node(LINE, $1, $3); }
-               | expr '>' expr	                              { $$ = new cdk::gt_node(LINE, $1, $3); }
-               | expr tGE expr	                              { $$ = new cdk::ge_node(LINE, $1, $3); }
+               | expr '+' expr	                                 { $$ = new cdk::add_node(LINE, $1, $3); }
+               | expr '-' expr	                                 { $$ = new cdk::sub_node(LINE, $1, $3); }
+               | expr '*' expr	                                 { $$ = new cdk::mul_node(LINE, $1, $3); }
+               | expr '/' expr	                                 { $$ = new cdk::div_node(LINE, $1, $3); }
+               | expr '%' expr	                                 { $$ = new cdk::mod_node(LINE, $1, $3); }
+               | expr '<' expr	                                 { $$ = new cdk::lt_node(LINE, $1, $3); }
+               | expr '>' expr	                                 { $$ = new cdk::gt_node(LINE, $1, $3); }
+               | expr tGE expr	                                 { $$ = new cdk::ge_node(LINE, $1, $3); }
                | expr tLE expr                                   { $$ = new cdk::le_node(LINE, $1, $3); }
-               | expr tNE expr	                              { $$ = new cdk::ne_node(LINE, $1, $3); }
-               | expr tEQ expr	                              { $$ = new cdk::eq_node(LINE, $1, $3); }
+               | expr tNE expr	                                 { $$ = new cdk::ne_node(LINE, $1, $3); }
+               | expr tEQ expr	                                 { $$ = new cdk::eq_node(LINE, $1, $3); }
                | '(' expr ')'                                    { $$ = $2; }
                | lval                                            { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
                | lval '=' expr                                   { $$ = new cdk::assignment_node(LINE, $1, $3); }

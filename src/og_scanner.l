@@ -38,11 +38,11 @@
 "require"              return tREQUIRE;
 "procedure"            return tPROCEDURE;
 
-"int"                  return tINTEGER;
-"real"                 return tREAL;
-"string"               return tSTRING;
-"auto"                 return tAUTO;
-"ptr"                  return tPOINTER;
+"int"                  return tINTTAG;
+"real"                 return tREALTAG;
+"string"               return tSTRINGTAG;
+"auto"                 return tAUTOTAG;
+"ptr"                  return tPOINTERTAG;
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
