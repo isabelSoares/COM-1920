@@ -59,7 +59,7 @@ declaration    : var ';'                                           { /* TODO */ 
                | procedure                                         { /* TODO */ }
                ;
 
-var            : pre_others type lval                      { /* TODO */ }
+var            : pre_others type lval                       { /* TODO */ }
                | pre_others type lval '=' expr             { /* TODO */ }
                | tPUBLIC tAUTOTAG identifiers '=' exps           { /* TODO */ }
                | tAUTOTAG identifiers '=' exps                   { /* TODO */ }
