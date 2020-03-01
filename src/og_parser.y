@@ -36,8 +36,8 @@
 %left               '*' '/' '%'
 %nonassoc           tUNARY
 
-%type <node>        instr program inst_condit inst_iter function procedure identifier declaration
-%type <sequence>    block exps vars declarations instrs
+%type <node>        instr file inst_condit inst_iter function procedure declaration pre_others
+%type <sequence>    block exps vars declarations instrs identifiers
 %type <expression>  expr
 %type <lvalue>      lval var
 
@@ -46,7 +46,7 @@
 %}
 %%
 
-program	       : declaration declarations                          { /* TODO */ }
+file	       : declaration declarations                          { /* TODO */ }
 	             ;
 
 /* Extra to be easier. */
@@ -59,29 +59,33 @@ declaration    : var ';'                                           { /* TODO */ 
                | procedure                                         { /* TODO */ }
                ;
 
-var            :
+var            : pre_others type lval                      { /* TODO */ }
+               | pre_others type lval '=' expr             { /* TODO */ }
+               | tPUBLIC tAUTOTAG identifiers '=' exps           { /* TODO */ }
+               | tAUTOTAG identifiers '=' exps                   { /* TODO */ }
                ;
 
-function       :
-               ;
+function       : pre_others '(' tAUTOTAG ')' lval pos_others            { /* TODO */ }
+               | pre_others '(' type ')' lval pos_others                { /* TODO */ }
 
 /* Extra to be easier. */
-pre_proc       : /* EMPTY */                                      { /* TODO */ }
+pre_others     : /* EMPTY */                                      { /* TODO */ }
                | tPUBLIC                                          { /* TODO */ }
                | tREQUIRE                                         { /* TODO */ }
                ;
 
 /* Extra to be easier. */
-pos_proc       : '(' ')'
+pos_others       : '(' ')'
                | '(' ')' block
                | '(' vars ')'
                | '(' vars ')' block
                ;
 
-procedure      : pre_proc tPROCEDURE identifier '(' ')' pos_proc  { /* TODO */ }
+procedure      : pre_others tPROCEDURE lval '(' ')' pos_others  { /* TODO */ }
                ;
 
-identifier     :
+identifiers    : lval                                      { $$ = new cdk::sequence_node(LINE, $1); }
+               | identifiers ',' lval                      { $$ = new cdk::sequence_node(LINE, $3, $1); }
                ;
 
 exps           : expr                                            { $$ = new cdk::sequence_node(LINE, $1); }
@@ -95,8 +99,8 @@ vars           : var                                             { $$ = new cdk:
 type           : tINTTAG                                         { /* TODO */ }
                | tREALTAG                                        { /* TODO */ }
                | tSTRINGTAG                                      { /* TODO */ }
-               | tAUTOTAG '<' '(' tAUTOTAG ')' '>'               { /* TODO */ }
-               | tAUTOTAG '<' '(' type ')' '>'                   { /* TODO */ }
+               | tPOINTERTAG '<' '(' tAUTOTAG ')' '>'            { /* TODO */ }
+               | tPOINTERTAG '<' '(' type ')' '>'                { /* TODO */ }
                ;
 
 block          : '{' declarations instrs '}'                     { /* TODO */ }
