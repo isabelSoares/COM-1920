@@ -46,7 +46,7 @@
 %}
 %%
 
-file	       : declaration declarations                          { /* TODO */ }
+file	         : declaration declarations                          { /* TODO */ }
 	             ;
 
 /* Extra to be easier. */
@@ -59,33 +59,35 @@ declaration    : var ';'                                           { /* TODO */ 
                | procedure                                         { /* TODO */ }
                ;
 
-var            : pre_others type lval                       { /* TODO */ }
-               | pre_others type lval '=' expr             { /* TODO */ }
+var            : pre_others type tIDENTIFIER                            { /* TODO */ }
+               | pre_others type tIDENTIFIER '=' expr                   { /* TODO */ }
                | tPUBLIC tAUTOTAG identifiers '=' exps           { /* TODO */ }
                | tAUTOTAG identifiers '=' exps                   { /* TODO */ }
                ;
 
-function       : pre_others '(' tAUTOTAG ')' lval pos_others            { /* TODO */ }
-               | pre_others '(' type ')' lval pos_others                { /* TODO */ }
+function       : '(' tAUTOTAG ')' tIDENTIFIER pos_others            { /* TODO */ }
+               | '(' type ')' tIDENTIFIER pos_others                { /* TODO */ }
+               | pre_others '(' tAUTOTAG ')' tIDENTIFIER pos_others            { /* TODO */ }
+               | pre_others '(' type ')' tIDENTIFIER pos_others                { /* TODO */ }
+               ;
 
 /* Extra to be easier. */
-pre_others     : /* EMPTY */                                      { /* TODO */ }
-               | tPUBLIC                                          { /* TODO */ }
+pre_others     : tPUBLIC                                          { /* TODO */ }
                | tREQUIRE                                         { /* TODO */ }
                ;
 
 /* Extra to be easier. */
-pos_others       : '(' ')'
+pos_others     : '(' ')'
                | '(' ')' block
                | '(' vars ')'
                | '(' vars ')' block
                ;
 
-procedure      : pre_others tPROCEDURE lval '(' ')' pos_others  { /* TODO */ }
+procedure      : pre_others tPROCEDURE tIDENTIFIER '(' ')' pos_others  { /* TODO */ }
                ;
 
-identifiers    : lval                                      { $$ = new cdk::sequence_node(LINE, $1); }
-               | identifiers ',' lval                      { $$ = new cdk::sequence_node(LINE, $3, $1); }
+identifiers    : tIDENTIFIER                                     { /* TODO */ }
+               | identifiers ',' tIDENTIFIER                     { /* TODO */ }
                ;
 
 exps           : expr                                            { $$ = new cdk::sequence_node(LINE, $1); }
@@ -125,7 +127,7 @@ instr          : expr ';'                                        { $$ = new og::
                | block                                           { $$ = $1; }
                ;
 
-inst_condit    : tIF expr tTHEN instr                            { $$ = new og::if_node(LINE, $2, $4); }
+inst_condit    : tIF expr tTHEN instr  %prec tIFX                          { $$ = new og::if_node(LINE, $2, $4); }
                | tIF expr instr elif_condit                      { /* TODO */ }
                | tIF expr instr elif_condit tELSE instr          { /* TODO */ }
                | tIF expr tTHEN instr tELSE instr                { $$ = new og::if_else_node(LINE, $2, $4, $6); }
@@ -143,6 +145,7 @@ inst_iter      : tFOR '(' exps ';' exps ';' exps ')' tDO instr   { $$ = new og::
 expr           : tINTEGER                                        { $$ = new cdk::integer_node(LINE, $1); }
                | tSTRING                                         { $$ = new cdk::string_node(LINE, $1); }
                | '-' expr %prec tUNARY                           { $$ = new cdk::neg_node(LINE, $2); }
+               | '+' expr %prec tUNARY                           { /* TODO */ }
                | expr '+' expr	                                 { $$ = new cdk::add_node(LINE, $1, $3); }
                | expr '-' expr	                                 { $$ = new cdk::sub_node(LINE, $1, $3); }
                | expr '*' expr	                                 { $$ = new cdk::mul_node(LINE, $1, $3); }
