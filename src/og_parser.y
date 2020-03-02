@@ -24,10 +24,11 @@
 %token <r>          tREAL
 %token <s>          tIDENTIFIER tSTRING
 %token              tFOR tIF tPRINT tINPUT
-%token              tTHEN tDO tPUBLIC tREQUIRE tRETURN tPRINT tPOINTER tWRITE tWRITELN tBREAK tCONTINUE tELIF tPROCEDURE
+%token              tTHEN tDO tPUBLIC tREQUIRE tRETURN tPRINT tPOINTER tWRITE tWRITELN tBREAK tCONTINUE tPROCEDURE
 %token              tINTTAG tREALTAG tSTRINGTAG tAUTOTAG tPOINTERTAG
 
 %nonassoc           tIFX
+%nonassoc           tELIF
 %nonassoc           tELSE
 
 %right              '='
@@ -37,7 +38,7 @@
 %nonassoc           tUNARY
 %nonassoc           ';' '(' ')' '{' '}' ','
 
-%type <node>        instr file inst_condit inst_iter function procedure declaration pre_others
+%type <node>        instr file inst_condit inst_iter function procedure declaration
 %type <sequence>    block exps vars declarations instrs identifiers
 %type <expression>  expr
 %type <lvalue>      lval var
@@ -50,11 +51,6 @@
 /* Extra to be easier. */
 declarations   :              declaration                         { /* TODO */ }
                | declarations declaration                         { $$ = new cdk::sequence_node(LINE, $2, $1); }
-               ;
-
-/* Extra to be easier. */
-pre_others     : tPUBLIC                                          { /* TODO */ }
-               | tREQUIRE                                         { /* TODO */ }
                ;
 
 /* Extra to be easier. */
@@ -84,20 +80,25 @@ declaration    : var ';'                                          { /* TODO */ }
                | procedure                                        { /* TODO */ }
                ;
 
-var            :            type tIDENTIFIER                      { /* TODO */ }
-               | pre_others type tIDENTIFIER                      { /* TODO */ }
-               | pre_others type tIDENTIFIER  '=' expr            { /* TODO */ }
+var            :          type tIDENTIFIER                        { /* TODO */ }
+               | tPUBLIC  type tIDENTIFIER                        { /* TODO */ }
+               | tREQUIRE type tIDENTIFIER                        { /* TODO */ }
+               | tPUBLIC  type tIDENTIFIER    '=' expr            { /* TODO */ }
+               | tREQUIRE type tIDENTIFIER    '=' expr            { /* TODO */ }
                |         tAUTOTAG identifiers '=' exps            { /* TODO */ }
                | tPUBLIC tAUTOTAG identifiers '=' exps            { /* TODO */ }
                ;
 
 function       :            type      tIDENTIFIER pos_others      { /* TODO */ }
                |            tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
-               | pre_others tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
-               | pre_others type      tIDENTIFIER pos_others      { /* TODO */ }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
+               | tPUBLIC    type      tIDENTIFIER pos_others      { /* TODO */ }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
+               | tREQUIRE   type      tIDENTIFIER pos_others      { /* TODO */ }
                ;
 
-procedure      : pre_others tPROCEDURE tIDENTIFIER pos_others     { /* TODO */ }
+procedure      : tPUBLIC  tPROCEDURE tIDENTIFIER pos_others       { /* TODO */ }
+               | tREQUIRE tPROCEDURE tIDENTIFIER pos_others       { /* TODO */ }
                ;
 
 identifiers    :                 tIDENTIFIER                      { /* TODO */ }
