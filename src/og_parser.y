@@ -35,6 +35,7 @@
 %left               '+' '-'
 %left               '*' '/' '%'
 %nonassoc           tUNARY
+%nonassoc           ';' '(' ')' '{' '}' ','
 
 %type <node>        instr file inst_condit inst_iter function procedure declaration pre_others
 %type <sequence>    block exps vars declarations instrs identifiers
@@ -46,29 +47,9 @@
 %}
 %%
 
-file	         : declaration declarations                          { /* TODO */ }
-	             ;
-
 /* Extra to be easier. */
-declarations   : declaration                                       { /* TODO */ }
-               | declarations declaration                          { $$ = new cdk::sequence_node(LINE, $2, $1); }
-               ;
-
-declaration    : var ';'                                           { /* TODO */ }
-               | function                                          { /* TODO */ }
-               | procedure                                         { /* TODO */ }
-               ;
-
-var            : pre_others type tIDENTIFIER                            { /* TODO */ }
-               | pre_others type tIDENTIFIER '=' expr                   { /* TODO */ }
-               | tPUBLIC tAUTOTAG identifiers '=' exps           { /* TODO */ }
-               | tAUTOTAG identifiers '=' exps                   { /* TODO */ }
-               ;
-
-function       : '(' tAUTOTAG ')' tIDENTIFIER pos_others            { /* TODO */ }
-               | '(' type ')' tIDENTIFIER pos_others                { /* TODO */ }
-               | pre_others '(' tAUTOTAG ')' tIDENTIFIER pos_others            { /* TODO */ }
-               | pre_others '(' type ')' tIDENTIFIER pos_others                { /* TODO */ }
+declarations   :              declaration                         { /* TODO */ }
+               | declarations declaration                         { $$ = new cdk::sequence_node(LINE, $2, $1); }
                ;
 
 /* Extra to be easier. */
@@ -77,40 +58,71 @@ pre_others     : tPUBLIC                                          { /* TODO */ }
                ;
 
 /* Extra to be easier. */
-pos_others     : '(' ')'
-               | '(' ')' block
+pos_others     : '('      ')'
+               | '('      ')' block
                | '(' vars ')'
                | '(' vars ')' block
                ;
 
-procedure      : pre_others tPROCEDURE tIDENTIFIER '(' ')' pos_others  { /* TODO */ }
+/* Extra to be easier. */
+instrs         :        instr                                     { /* TODO */ }
+               | instrs instr                                     { $$ = new cdk::sequence_node(LINE, $2, $1); }
                ;
 
-identifiers    : tIDENTIFIER                                     { /* TODO */ }
-               | identifiers ',' tIDENTIFIER                     { /* TODO */ }
+/* Extra to be easier. */
+elif_condit    :             tELIF expr tTHEN instr               { /* TODO */ }
+               | elif_condit tELIF expr tTHEN instr               { /* TODO */ }
                ;
 
-exps           : expr                                            { $$ = new cdk::sequence_node(LINE, $1); }
+/* Extra to be easier. */
+
+file	         : declaration declarations                         { /* TODO */ }
+	             ;
+
+declaration    : var ';'                                          { /* TODO */ }
+               | function                                         { /* TODO */ }
+               | procedure                                        { /* TODO */ }
+               ;
+
+var            :            type tIDENTIFIER                      { /* TODO */ }
+               | pre_others type tIDENTIFIER                      { /* TODO */ }
+               | pre_others type tIDENTIFIER  '=' expr            { /* TODO */ }
+               |         tAUTOTAG identifiers '=' exps            { /* TODO */ }
+               | tPUBLIC tAUTOTAG identifiers '=' exps            { /* TODO */ }
+               ;
+
+function       :            type      tIDENTIFIER pos_others      { /* TODO */ }
+               |            tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
+               | pre_others tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
+               | pre_others type      tIDENTIFIER pos_others      { /* TODO */ }
+               ;
+
+procedure      : pre_others tPROCEDURE tIDENTIFIER pos_others     { /* TODO */ }
+               ;
+
+identifiers    :                 tIDENTIFIER                      { /* TODO */ }
+               | identifiers ',' tIDENTIFIER                      { /* TODO */ }
+               ;
+
+exps           :          expr                                   { $$ = new cdk::sequence_node(LINE, $1); }
                | exps ',' expr                                   { $$ = new cdk::sequence_node(LINE, $3, $1); }
                ;
 
-vars           : var                                             { $$ = new cdk::sequence_node(LINE, $1); }
+vars           :          var                                    { $$ = new cdk::sequence_node(LINE, $1); }
                | vars ',' var                                    { $$ = new cdk::sequence_node(LINE, $3, $1); }
                ;
 
 type           : tINTTAG                                         { /* TODO */ }
                | tREALTAG                                        { /* TODO */ }
                | tSTRINGTAG                                      { /* TODO */ }
-               | tPOINTERTAG '<' '(' tAUTOTAG ')' '>'            { /* TODO */ }
-               | tPOINTERTAG '<' '(' type ')' '>'                { /* TODO */ }
+               | tPOINTERTAG '<' tAUTOTAG '>'                    { /* TODO */ }
+               | tPOINTERTAG '<' type     '>'                    { /* TODO */ }
                ;
 
-block          : '{' declarations instrs '}'                     { /* TODO */ }
-               ;
-
-/* Extra to be easier. */
-instrs         : instr                                           { /* TODO */ }
-               | instrs instr                                    { $$ = new cdk::sequence_node(LINE, $2, $1); }
+block          : '{'                      '}'                    { /* TODO */ }
+               | '{' declarations         '}'                    { /* TODO */ }
+               | '{'              instrs  '}'                    { /* TODO */ }
+               | '{' declarations instrs  '}'                    { /* TODO */ }
                ;
 
 instr          : expr ';'                                        { $$ = new og::evaluation_node(LINE, $1); }
@@ -127,19 +139,14 @@ instr          : expr ';'                                        { $$ = new og::
                | block                                           { $$ = $1; }
                ;
 
-inst_condit    : tIF expr tTHEN instr  %prec tIFX                          { $$ = new og::if_node(LINE, $2, $4); }
-               | tIF expr instr elif_condit                      { /* TODO */ }
-               | tIF expr instr elif_condit tELSE instr          { /* TODO */ }
-               | tIF expr tTHEN instr tELSE instr                { $$ = new og::if_else_node(LINE, $2, $4, $6); }
+inst_condit    : tIF expr tTHEN instr                         %prec tIFX     { $$ = new og::if_node(LINE, $2, $4); }
+               | tIF expr tTHEN instr elif_condit             %prec tIFX     { /* TODO */ }
+               | tIF expr tTHEN instr elif_condit tELSE instr                { /* TODO */ }
+               | tIF expr tTHEN instr             tELSE instr %prec tELSE    { $$ = new og::if_else_node(LINE, $2, $4, $6); }
                ;
 
-/* Extra to be easier. */
-elif_condit    : tELIF expr tTHEN instr                          { /* TODO */ }
-               | elif_condit tELIF expr tTHEN instr              { /* TODO */ }
-               ;
-
-inst_iter      : tFOR '(' exps ';' exps ';' exps ')' tDO instr   { $$ = new og::for_node(LINE, $3, $5, $7, $10); }
-               | tFOR '(' vars ';' exps ';' exps ')' tDO instr   { $$ = new og::for_node(LINE, $3, $5, $7, $10); }
+inst_iter      : tFOR exps ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, $2, $4, $6, $8); }
+               | tFOR vars ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, $2, $4, $6, $8); }
                ;
 
 expr           : tINTEGER                                        { $$ = new cdk::integer_node(LINE, $1); }
