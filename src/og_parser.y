@@ -48,6 +48,9 @@
 %}
 %%
 
+file	         : declarations                                     { /* TODO */ }
+	             ;
+
 /* Extra to be easier. */
 declarations   :              declaration                         { /* TODO */ }
                | declarations declaration                         { $$ = new cdk::sequence_node(LINE, $2, $1); }
@@ -71,9 +74,6 @@ elif_condit    :             tELIF expr tTHEN instr               { /* TODO */ }
                ;
 
 /* Extra to be easier. */
-
-file	         : declaration declarations                         { /* TODO */ }
-	             ;
 
 declaration    : var ';'                                          { /* TODO */ }
                | function                                         { /* TODO */ }
