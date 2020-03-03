@@ -35,8 +35,9 @@
 %left               tGE tLE tEQ tNE '>' '<'
 %left               '+' '-'
 %left               '*' '/' '%'
-%nonassoc           tUNARY
-%nonassoc           ';' '(' ')' '{' '}' ','
+%left               '&&' '||'
+%nonassoc           tUNARY '?' '~'
+%nonassoc           ';' '(' ')' '{' '}' '[' ']' ','
 
 %type <node>        instr file inst_condit inst_iter function procedure declaration
 %type <sequence>    block exps vars declarations instrs identifiers
@@ -147,32 +148,28 @@ inst_condit    : tIF expr tTHEN instr                         %prec tIFX     { $
                ;
 
 inst_iter      : tFOR      ';'      ';'      tDO instr           { $$ = new og::for_node(LINE, nullptr, nullptr, nullptr, $5); }
-               | tFOR exps ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, $2     , $4     , nullptr, $7); }
-               | tFOR exps ';'      ';' exps tDO instr           { $$ = new og::for_node(LINE, $2     , nullptr, $5     , $7); }
+               | tFOR      ';'      ';' exps tDO instr           { $$ = new og::for_node(LINE, nullptr, nullptr, $4     , $6); }
+               | tFOR      ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, nullptr, $3     , nullptr, $6); }
+               | tFOR      ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, nullptr, $3     , $5     , $7); }
                | tFOR exps ';'      ';'      tDO instr           { $$ = new og::for_node(LINE, $2     , nullptr, nullptr, $6); }
-               | tFOR      ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, nullptr, $3     , $5     , $7); }
-               | tFOR      ';'      ';' exps tDO instr           { $$ = new og::for_node(LINE, nullptr, nullptr, $4     , $6); }
+               | tFOR exps ';'      ';' exps tDO instr           { $$ = new og::for_node(LINE, $2     , nullptr, $5     , $7); }
+               | tFOR exps ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, $2     , $4     , nullptr, $7); }
                | tFOR exps ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, $2     , $4     , $6     , $8); }
-               | tFOR      ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, nullptr, $3     , nullptr, $6); }
-               | tFOR      ';'      ';'      tDO instr           { $$ = new og::for_node(LINE, nullptr, nullptr, nullptr, $5); }
                | tFOR vars ';'      ';'      tDO instr           { $$ = new og::for_node(LINE, $2     , nullptr, nullptr, $6); }
-               | tFOR vars ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, $2     , $4     , nullptr, $7); }
                | tFOR vars ';'      ';' exps tDO instr           { $$ = new og::for_node(LINE, $2     , nullptr, $5     , $7); }
-               | tFOR      ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, nullptr, $3     , $5     , $7); }
-               | tFOR      ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, nullptr, $3     , nullptr, $6); }
-               | tFOR      ';'      ';' exps tDO instr           { $$ = new og::for_node(LINE, nullptr, nullptr, $4     , $6); }
+               | tFOR vars ';' exps ';'      tDO instr           { $$ = new og::for_node(LINE, $2     , $4     , nullptr, $7); }
                | tFOR vars ';' exps ';' exps tDO instr           { $$ = new og::for_node(LINE, $2     , $4     , $6     , $8); }
                ;
 
 expr           : tINTEGER                                        { $$ = new cdk::integer_node(LINE, $1); }
                | tSTRING                                         { $$ = new cdk::string_node(LINE, $1); }
-               | '-' expr  %prec tUNARY                           { $$ = new cdk::neg_node(LINE, $2); }
-               | '+' expr  %prec tUNARY                           { /* TODO */ }
+               | '-' expr  %prec tUNARY                          { $$ = new cdk::neg_node(LINE, $2); }
+               | '+' expr  %prec tUNARY                          { /* TODO */ }
+               | '~' expr                                        { $$ = new cdk::not_node(LINE, $2); }
                | expr '+'  expr	                                 { $$ = new cdk::add_node(LINE, $1, $3); }
                | expr '-'  expr	                                 { $$ = new cdk::sub_node(LINE, $1, $3); }
                | expr '*'  expr	                                 { $$ = new cdk::mul_node(LINE, $1, $3); }
                | expr '/'  expr	                                 { $$ = new cdk::div_node(LINE, $1, $3); }
-               | '~'  expr	                                     { $$ = new cdk::not_node(LINE, $2); }
                | expr '&&' expr	                                 { $$ = new cdk::and_node(LINE, $1, $3); }
                | expr '||' expr	                                 { $$ = new cdk::or_node(LINE, $1, $3); }
                | expr '%'  expr	                                 { $$ = new cdk::mod_node(LINE, $1, $3); }
@@ -184,6 +181,7 @@ expr           : tINTEGER                                        { $$ = new cdk:
                | expr tEQ  expr	                                 { $$ = new cdk::eq_node(LINE, $1, $3); }
                | '(' expr  ')'                                   { $$ = $2; }
                | lval                                            { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
+               | lval '?'                                        { /* TODO */ }
                | lval '=' expr                                   { $$ = new cdk::assignment_node(LINE, $1, $3); }
                ;
 
