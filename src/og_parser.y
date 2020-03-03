@@ -166,20 +166,23 @@ inst_iter      : tFOR      ';'      ';'      tDO instr           { $$ = new og::
 
 expr           : tINTEGER                                        { $$ = new cdk::integer_node(LINE, $1); }
                | tSTRING                                         { $$ = new cdk::string_node(LINE, $1); }
-               | '-' expr %prec tUNARY                           { $$ = new cdk::neg_node(LINE, $2); }
-               | '+' expr %prec tUNARY                           { /* TODO */ }
-               | expr '+' expr	                                 { $$ = new cdk::add_node(LINE, $1, $3); }
-               | expr '-' expr	                                 { $$ = new cdk::sub_node(LINE, $1, $3); }
-               | expr '*' expr	                                 { $$ = new cdk::mul_node(LINE, $1, $3); }
-               | expr '/' expr	                                 { $$ = new cdk::div_node(LINE, $1, $3); }
-               | expr '%' expr	                                 { $$ = new cdk::mod_node(LINE, $1, $3); }
-               | expr '<' expr	                                 { $$ = new cdk::lt_node(LINE, $1, $3); }
-               | expr '>' expr	                                 { $$ = new cdk::gt_node(LINE, $1, $3); }
-               | expr tGE expr	                                 { $$ = new cdk::ge_node(LINE, $1, $3); }
-               | expr tLE expr                                   { $$ = new cdk::le_node(LINE, $1, $3); }
-               | expr tNE expr	                                 { $$ = new cdk::ne_node(LINE, $1, $3); }
-               | expr tEQ expr	                                 { $$ = new cdk::eq_node(LINE, $1, $3); }
-               | '(' expr ')'                                    { $$ = $2; }
+               | '-' expr  %prec tUNARY                           { $$ = new cdk::neg_node(LINE, $2); }
+               | '+' expr  %prec tUNARY                           { /* TODO */ }
+               | expr '+'  expr	                                 { $$ = new cdk::add_node(LINE, $1, $3); }
+               | expr '-'  expr	                                 { $$ = new cdk::sub_node(LINE, $1, $3); }
+               | expr '*'  expr	                                 { $$ = new cdk::mul_node(LINE, $1, $3); }
+               | expr '/'  expr	                                 { $$ = new cdk::div_node(LINE, $1, $3); }
+               | '~'  expr	                                     { $$ = new cdk::not_node(LINE, $2); }
+               | expr '&&' expr	                                 { $$ = new cdk::and_node(LINE, $1, $3); }
+               | expr '||' expr	                                 { $$ = new cdk::or_node(LINE, $1, $3); }
+               | expr '%'  expr	                                 { $$ = new cdk::mod_node(LINE, $1, $3); }
+               | expr '<'  expr	                                 { $$ = new cdk::lt_node(LINE, $1, $3); }
+               | expr '>'  expr	                                 { $$ = new cdk::gt_node(LINE, $1, $3); }
+               | expr tGE  expr	                                 { $$ = new cdk::ge_node(LINE, $1, $3); }
+               | expr tLE  expr                                  { $$ = new cdk::le_node(LINE, $1, $3); }
+               | expr tNE  expr	                                 { $$ = new cdk::ne_node(LINE, $1, $3); }
+               | expr tEQ  expr	                                 { $$ = new cdk::eq_node(LINE, $1, $3); }
+               | '(' expr  ')'                                   { $$ = $2; }
                | lval                                            { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
                | lval '=' expr                                   { $$ = new cdk::assignment_node(LINE, $1, $3); }
                ;
