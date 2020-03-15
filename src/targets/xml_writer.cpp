@@ -127,11 +127,12 @@ void og::xml_writer::do_assignment_node(cdk::assignment_node * const node, int l
 
 //---------------------------------------------------------------------------
 
+/* CLEAN
 void og::xml_writer::do_program_node(og::program_node * const node, int lvl) {
   openTag(node, lvl);
   node->statements()->accept(this, lvl + 4);
   closeTag(node, lvl);
-}
+} */
 
 //---------------------------------------------------------------------------
 
@@ -142,21 +143,23 @@ void og::xml_writer::do_evaluation_node(og::evaluation_node * const node, int lv
   closeTag(node, lvl);
 }
 
+/* CLEAN
 void og::xml_writer::do_print_node(og::print_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
-}
+} */
 
 //---------------------------------------------------------------------------
 
+/* CLEAN
 void og::xml_writer::do_read_node(og::read_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
-}
+} */
 
 //---------------------------------------------------------------------------
 
@@ -206,4 +209,40 @@ void og::xml_writer::do_if_else_node(og::if_else_node * const node, int lvl) {
   node->elseblock()->accept(this, lvl + 4);
   closeTag("else", lvl + 2);
   closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void og::xml_writer::do_block_node(og::block_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_break_node(og::break_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_continue_node(og::continue_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_file_node(og::file_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_function_declaration_node(og::function_declaration_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_function_header_node(og::function_header_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_input_node(og::input_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_return_node(og::return_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_return_void_node(og::return_void_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_write_node(og::write_node *const node, int lvl) {
+  // EMPTY
 }

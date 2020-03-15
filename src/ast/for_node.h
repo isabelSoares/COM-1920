@@ -1,6 +1,7 @@
 #ifndef __OG_AST_FOR_NODE_H__
 #define __OG_AST_FOR_NODE_H__
 
+#include <cdk/ast/basic_node.h>
 #include <cdk/ast/sequence_node.h>
 
 namespace og {
