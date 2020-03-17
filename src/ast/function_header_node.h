@@ -13,12 +13,12 @@ namespace og {
    */
   class function_header_node: public cdk::basic_node {
     std::string _qualifier;
-    std::string _type;
+    cdk::basic_type *_type;
     std::string _identifier;
     cdk::sequence_node *_arguments;
 
   public:
-    inline function_header_node(int lineno, std::string &qualifier, std::string &type, std::string &identifier, cdk::sequence_node *arguments) :
+    inline function_header_node(int lineno, std::string &qualifier, cdk::basic_type *type, std::string &identifier, cdk::sequence_node *arguments) :
         basic_node(lineno), _qualifier(qualifier), _type(type), _identifier(identifier), _arguments(arguments) {
     }
 
@@ -26,7 +26,7 @@ namespace og {
     inline std::string &qualifier() {
         return _qualifier;
     }
-    inline std::string &type() {
+    inline cdk::basic_type *type() {
         return _type;
     }
     inline std::string &identifier() {

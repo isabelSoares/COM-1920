@@ -246,3 +246,18 @@ void og::xml_writer::do_return_void_node(og::return_void_node *const node, int l
 void og::xml_writer::do_write_node(og::write_node *const node, int lvl) {
   // EMPTY
 }
+void og::xml_writer::do_allocation_node(og::allocation_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_dimension_node(og::dimension_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_index_node(og::index_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_index_tuple_node(og::index_tuple_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_position_node(og::position_node *const node, int lvl) {
+  // EMPTY
+}

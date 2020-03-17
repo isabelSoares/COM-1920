@@ -237,3 +237,18 @@ void og::type_checker::do_return_void_node(og::return_void_node *const node, int
 void og::type_checker::do_write_node(og::write_node *const node, int lvl) {
   // EMPTY
 }
+void og::type_checker::do_allocation_node(og::allocation_node *const node, int lvl) {  
+  // EMPTY
+}
+void og::type_checker::do_dimension_node(og::dimension_node *const node, int lvl) {    
+  // EMPTY
+}
+void og::type_checker::do_index_node(og::index_node *const node, int lvl) {
+  // EMPTY
+}
+void og::type_checker::do_index_tuple_node(og::index_tuple_node *const node, int lvl) {
+  // EMPTY
+}
+void og::type_checker::do_position_node(og::position_node *const node, int lvl) {
+  // EMPTY
+}
