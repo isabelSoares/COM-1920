@@ -261,3 +261,6 @@ void og::xml_writer::do_index_tuple_node(og::index_tuple_node *const node, int l
 void og::xml_writer::do_position_node(og::position_node *const node, int lvl) {
   // EMPTY
 }
+void og::xml_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
+  // EMPTY
+}

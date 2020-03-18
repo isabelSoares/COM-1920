@@ -2,18 +2,19 @@
 #define __OG_AST_INPUT_NODE_H__
 
 #include <cdk/ast/lvalue_node.h>
+#include <cdk/ast/expression_node.h>
 
 namespace og {
 
   /**
    * Class for describing read nodes.
    */
-  class input_node: public cdk::basic_node {
+  class input_node: public cdk::expression_node {
     cdk::lvalue_node *_argument;
 
   public:
     inline input_node(int lineno, cdk::lvalue_node *argument) :
-        cdk::basic_node(lineno), _argument(argument) {
+        cdk::expression_node(lineno), _argument(argument) {
     }
 
   public:

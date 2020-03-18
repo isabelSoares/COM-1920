@@ -10,16 +10,16 @@ namespace og {
   /**
    * Class for describing for-cycle nodes.
    */
-  class function_invocation_node: public cdk::basic_node {
+  class function_invocation_node: public cdk::sequence_node {
     std::string _identifier;
     cdk::sequence_node *_arguments;
 
   public:
     inline function_invocation_node(int lineno, std::string &identifier) :
-        basic_node(lineno), _identifier(identifier) {
+        sequence_node(lineno), _identifier(identifier) {
     }
     inline function_invocation_node(int lineno, std::string &identifier, cdk::sequence_node *arguments) :
-        basic_node(lineno), _identifier(identifier), _arguments(arguments) {
+        sequence_node(lineno), _identifier(identifier), _arguments(arguments) {
     }
 
   public:

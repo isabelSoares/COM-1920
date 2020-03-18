@@ -252,3 +252,6 @@ void og::type_checker::do_index_tuple_node(og::index_tuple_node *const node, int
 void og::type_checker::do_position_node(og::position_node *const node, int lvl) {
   // EMPTY
 }
+void og::type_checker::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
+  // EMPTY
+}
