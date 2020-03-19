@@ -5,9 +5,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
   class allocation_node: public cdk::expression_node {
     cdk::basic_type *_type;
     int _size;

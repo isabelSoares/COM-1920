@@ -5,9 +5,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing evaluation nodes.
-   */
   class evaluation_node: public cdk::basic_node {
     cdk::expression_node *_argument;
 

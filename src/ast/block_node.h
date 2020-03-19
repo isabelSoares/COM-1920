@@ -6,9 +6,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
   class block_node: public cdk::basic_node {
     cdk::sequence_node *_declarations;
     cdk::sequence_node *_instructions;

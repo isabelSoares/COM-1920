@@ -5,9 +5,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing if-then-else nodes.
-   */
   class if_else_node: public cdk::basic_node {
     cdk::expression_node *_condition;
     cdk::basic_node *_thenblock, *_elseblock;

@@ -9,9 +9,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
   class function_declaration_node: public cdk::basic_node {
     std::string _qualifier;
     cdk::basic_type *_type;

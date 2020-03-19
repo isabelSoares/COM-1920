@@ -5,9 +5,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
   class return_void_node: public cdk::basic_node {
 
   public:

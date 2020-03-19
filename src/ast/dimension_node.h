@@ -5,9 +5,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
   class dimension_node: public cdk::expression_node {
     cdk::expression_node *_expression;
 

@@ -164,8 +164,7 @@ void og::postfix_writer::do_assignment_node(cdk::assignment_node * const node, i
 
 //---------------------------------------------------------------------------
 
-/* CLEAN
-void og::postfix_writer::do_program_node(og::program_node * const node, int lvl) {
+void og::postfix_writer::do_function_declaration_node(og::function_declaration_node * const node, int lvl) {
   // Note that Simple doesn't have functions. Thus, it doesn't need
   // a function node. However, it must start in the main function.
   // The ProgramNode (representing the whole program) doubles as a
@@ -174,11 +173,11 @@ void og::postfix_writer::do_program_node(og::program_node * const node, int lvl)
   // generate the main function (RTS mandates that its name be "_main")
   _pf.TEXT();
   _pf.ALIGN();
-  _pf.GLOBAL("_main", _pf.FUNC());
-  _pf.LABEL("_main");
+  _pf.GLOBAL("og", _pf.FUNC());
+  _pf.LABEL("og");
   _pf.ENTER(0);  // Simple doesn't implement local variables
 
-  node->statements()->accept(this, lvl);
+  node->block()->accept(this, lvl);
 
   // end the main function
   _pf.INT(0);
@@ -191,7 +190,7 @@ void og::postfix_writer::do_program_node(og::program_node * const node, int lvl)
   _pf.EXTERN("printi");
   _pf.EXTERN("prints");
   _pf.EXTERN("println");
-} */
+}
 
 //---------------------------------------------------------------------------
 
@@ -208,8 +207,7 @@ void og::postfix_writer::do_evaluation_node(og::evaluation_node * const node, in
   }
 }
 
-/* CLEAN
-void og::postfix_writer::do_print_node(og::print_node * const node, int lvl) {
+void og::postfix_writer::do_write_node(og::write_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->argument()->accept(this, lvl); // determine the value to print
   if (node->argument()->is_typed(cdk::TYPE_INT)) {
@@ -223,24 +221,20 @@ void og::postfix_writer::do_print_node(og::print_node * const node, int lvl) {
     exit(1);
   }
   _pf.CALL("println"); // print a newline
-}*/
+}
 
 //---------------------------------------------------------------------------
 
-/* CLEAN
-void og::postfix_writer::do_read_node(og::read_node * const node, int lvl) {
+void og::postfix_writer::do_input_node(og::input_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   _pf.CALL("readi");
   _pf.LDFVAL32();
-  node->argument()->accept(this, lvl);
   _pf.STINT();
-}*/
-
+}
 
 //---------------------------------------------------------------------------
 
-/* CLEAN
-void og::postfix_writer::do_while_node(og::while_node * const node, int lvl) {
+void og::postfix_writer::do_for_node(og::for_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   int lbl1, lbl2;
   _pf.LABEL(mklbl(lbl1 = ++_lbl));
@@ -249,12 +243,6 @@ void og::postfix_writer::do_while_node(og::while_node * const node, int lvl) {
   node->block()->accept(this, lvl + 2);
   _pf.JMP(mklbl(lbl1));
   _pf.LABEL(mklbl(lbl2));
-}*/
-
-//---------------------------------------------------------------------------
-
-void og::postfix_writer::do_for_node(og::for_node *const node, int lvl) {
-  // EMPTY
 }
 
 //---------------------------------------------------------------------------
@@ -293,28 +281,16 @@ void og::postfix_writer::do_break_node(og::break_node *const node, int lvl) {
 void og::postfix_writer::do_continue_node(og::continue_node *const node, int lvl) {
   // EMPTY
 }
-void og::postfix_writer::do_file_node(og::file_node *const node, int lvl) {
-  // EMPTY
-}
-void og::postfix_writer::do_function_declaration_node(og::function_declaration_node *const node, int lvl) {
-  // EMPTY
-}
 void og::postfix_writer::do_function_header_node(og::function_header_node *const node, int lvl) {
   // EMPTY
 }
 void og::postfix_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
   // EMPTY
 }
-void og::postfix_writer::do_input_node(og::input_node *const node, int lvl) {
-  // EMPTY
-}
 void og::postfix_writer::do_return_node(og::return_node *const node, int lvl) {
   // EMPTY
 }
 void og::postfix_writer::do_return_void_node(og::return_void_node *const node, int lvl) {
-  // EMPTY
-}
-void og::postfix_writer::do_write_node(og::write_node *const node, int lvl) {
   // EMPTY
 }
 void og::postfix_writer::do_allocation_node(og::allocation_node *const node, int lvl) {
@@ -333,5 +309,8 @@ void og::postfix_writer::do_position_node(og::position_node *const node, int lvl
   // EMPTY
 }
 void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
+  // EMPTY
+}
+void og::postfix_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
   // EMPTY
 }

@@ -153,43 +153,28 @@ void og::type_checker::do_assignment_node(cdk::assignment_node *const node, int 
 
 //---------------------------------------------------------------------------
 
-/* CLEAN
-void og::type_checker::do_program_node(og::program_node *const node, int lvl) {
+void og::type_checker::do_function_declaration_node(og::function_declaration_node *const node, int lvl) {
   // EMPTY
-} */
+}
 
 void og::type_checker::do_evaluation_node(og::evaluation_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
 }
 
-/* CLEAN
-void og::type_checker::do_print_node(og::print_node *const node, int lvl) {
+void og::type_checker::do_write_node(og::write_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
-} */
-
-//---------------------------------------------------------------------------
-
-/* CLEAN
-void og::type_checker::do_read_node(og::read_node *const node, int lvl) {
-  try {
-    node->argument()->accept(this, lvl);
-  } catch (const std::string &id) {
-    throw "undeclared variable '" + id + "'";
-  }
-} */
-
-//---------------------------------------------------------------------------
-
-/* CLEAN
-void og::type_checker::do_while_node(og::while_node *const node, int lvl) {
-  node->condition()->accept(this, lvl + 4);
 }
-*/
+
+//---------------------------------------------------------------------------
+
+void og::type_checker::do_input_node(og::input_node *const node, int lvl) {
+  // EMPTY
+}
 
 //---------------------------------------------------------------------------
 
 void og::type_checker::do_for_node(og::for_node *const node, int lvl) {
-  // EMPTY
+  node->condition()->accept(this, lvl + 4);
 }
 
 //---------------------------------------------------------------------------
@@ -213,28 +198,16 @@ void og::type_checker::do_break_node(og::break_node *const node, int lvl) {
 void og::type_checker::do_continue_node(og::continue_node *const node, int lvl) {
   // EMPTY
 }
-void og::type_checker::do_file_node(og::file_node *const node, int lvl) {
-  // EMPTY
-}
-void og::type_checker::do_function_declaration_node(og::function_declaration_node *const node, int lvl) {
-  // EMPTY
-}
 void og::type_checker::do_function_header_node(og::function_header_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
   // EMPTY
 }
-void og::type_checker::do_input_node(og::input_node *const node, int lvl) {
-  // EMPTY
-}
 void og::type_checker::do_return_node(og::return_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_return_void_node(og::return_void_node *const node, int lvl) {
-  // EMPTY
-}
-void og::type_checker::do_write_node(og::write_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_allocation_node(og::allocation_node *const node, int lvl) {  
@@ -253,5 +226,8 @@ void og::type_checker::do_position_node(og::position_node *const node, int lvl) 
   // EMPTY
 }
 void og::type_checker::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
+  // EMPTY
+}
+void og::type_checker::do_tuple_node(og::tuple_node *const node, int lvl) {
   // EMPTY
 }

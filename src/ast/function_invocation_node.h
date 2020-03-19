@@ -3,23 +3,21 @@
 
 #include <string>
 #include <cdk/ast/basic_node.h>
+#include <cdk/ast/expression_node.h>
 #include <cdk/ast/sequence_node.h>
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
-  class function_invocation_node: public cdk::sequence_node {
+  class function_invocation_node: public cdk::expression_node {
     std::string _identifier;
     cdk::sequence_node *_arguments;
 
   public:
     inline function_invocation_node(int lineno, std::string &identifier) :
-        sequence_node(lineno), _identifier(identifier) {
+        cdk::expression_node(lineno), _identifier(identifier) {
     }
     inline function_invocation_node(int lineno, std::string &identifier, cdk::sequence_node *arguments) :
-        sequence_node(lineno), _identifier(identifier), _arguments(arguments) {
+        cdk::expression_node(lineno), _identifier(identifier), _arguments(arguments) {
     }
 
   public:

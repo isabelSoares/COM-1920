@@ -6,9 +6,6 @@
 
 namespace og {
 
-  /**
-   * Class for describing for-cycle nodes.
-   */
   class position_node: public cdk::expression_node {
     cdk::lvalue_node *_lvalue;
 
