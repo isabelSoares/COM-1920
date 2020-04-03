@@ -1,15 +1,15 @@
-#ifndef __OG_AST_DIMENSION_NODE_H__
-#define __OG_AST_DIMENSION_NODE_H__
+#ifndef __OG_AST_SIZEOF_NODE_H__
+#define __OG_AST_SIZEOF_NODE_H__
 
 #include <cdk/ast/expression_node.h>
 
 namespace og {
 
-  class dimension_node: public cdk::expression_node {
+  class sizeof_node: public cdk::expression_node {
     cdk::expression_node *_expression;
 
   public:
-    inline dimension_node(int lineno, cdk::expression_node *expression) :
+    inline sizeof_node(int lineno, cdk::expression_node *expression) :
         cdk::expression_node(lineno), _expression(expression) {}
 
   public:
@@ -18,7 +18,7 @@ namespace og {
     }
 
     void accept(basic_ast_visitor *sp, int level) {
-      sp->do_dimension_node(this, level);
+      sp->do_sizeof_node(this, level);
     }
 
   };

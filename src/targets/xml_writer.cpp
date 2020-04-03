@@ -210,22 +210,13 @@ void og::xml_writer::do_break_node(og::break_node *const node, int lvl) {
 void og::xml_writer::do_continue_node(og::continue_node *const node, int lvl) {
   // EMPTY
 }
-void og::xml_writer::do_function_header_node(og::function_header_node *const node, int lvl) {
-  // EMPTY
-}
 void og::xml_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
   // EMPTY
 }
 void og::xml_writer::do_return_node(og::return_node *const node, int lvl) {
   // EMPTY
 }
-void og::xml_writer::do_return_void_node(og::return_void_node *const node, int lvl) {
-  // EMPTY
-}
 void og::xml_writer::do_allocation_node(og::allocation_node *const node, int lvl) {
-  // EMPTY
-}
-void og::xml_writer::do_dimension_node(og::dimension_node *const node, int lvl) {
   // EMPTY
 }
 void og::xml_writer::do_index_node(og::index_node *const node, int lvl) {
@@ -241,5 +232,14 @@ void og::xml_writer::do_var_declaration_node(og::var_declaration_node *const nod
   // EMPTY
 }
 void og::xml_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_identity_node(og::identity_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_nullptr_node(og::nullptr_node *const node, int lvl) {
+  // EMPTY
+}
+void og::xml_writer::do_sizeof_node(og::sizeof_node *const node, int lvl) {
   // EMPTY
 }
