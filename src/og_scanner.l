@@ -11,10 +11,11 @@
 // don't change this
 #define yyerror LexerError
 %}
-%x X_STRING
+%x X_STRING X_COMMENT
 %%
 
-"--".*                 ; /* ignore comments */
+"&&"                   return tAND; 
+"||"                   return tOR; 
 
 ">="                   return tGE; 
 "<="                   return tLE; 
@@ -25,6 +26,7 @@
 "if"                   return tIF; 
 "else"                 return tELSE;
 "input"                return tINPUT; 
+"sizeof"               return tSIZEOF;
 
 "do"                   return tDO;
 "then"                 return tTHEN;
@@ -46,13 +48,25 @@
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
-\'                     yy_push_state(X_STRING); yylval.s = new std::string("");
-<X_STRING>\'           yy_pop_state(); return tSTRING;
-<X_STRING>\\\'         *yylval.s += yytext + 1;
+\"                     yy_push_state(X_STRING); yylval.s = new std::string("");
+<X_STRING>\"           yy_pop_state(); return tSTRING;
+<X_STRING>\\\"         *yylval.s += yytext + 1;
 <X_STRING>.            *yylval.s += yytext;
 <X_STRING>\n           yyerror("newline in string");
 
 [0-9]+                 yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
+"0x"[A-Fa-f0-9]+       yylval.i = strtol(yytext, nullptr, 0); return tINTEGER;
+
+[0-9]*\.[0-9]+([Ee][-+]?[0-9]+)?        yylval.r = std::stod(yytext); return tREAL;
+[0-9]+\.[0-9]*([Ee][-+]?[0-9]+)?        yylval.r = std::stod(yytext); return tREAL;
+[0-9]+([Ee][-+]?[0-9]+)                 yylval.r = std::stod(yytext); return tREAL;
+
+"/*"                   yy_push_state(X_COMMENT);
+<X_COMMENT>"/*"        yy_push_state(X_COMMENT);
+<X_COMMENT>"*/"        yy_pop_state();
+<X_COMMENT>.|\n        ;
+
+"//".*$                ;
 
 [-()<>=+*/%;{}.]       return *yytext;
 

@@ -6,15 +6,20 @@
 namespace og {
 
   class tuple_node: public cdk::expression_node {
-      std::vector<cdk::expression_node> *_expressions;
+      std::vector<cdk::expression_node*> *_expressions;
 
   public:
-    inline tuple_node(int lineno, std::vector<cdk::expression_node> *expressions) :
+    inline tuple_node(int lineno, std::vector<cdk::expression_node*> *expressions) :
         cdk::expression_node(lineno), _expressions(expressions) {
     }
 
+    inline tuple_node(int lineno, std::vector<cdk::expression_node*> *expressions, cdk::expression_node *expression) :
+        cdk::expression_node(lineno), _expressions(expressions) {
+          _expressions->push_back(expression);
+    }
+
   public:
-    inline std::vector<cdk::expression_node> *expressions() {
+    inline std::vector<cdk::expression_node*> *expressions() {
       return _expressions;
     }
 
