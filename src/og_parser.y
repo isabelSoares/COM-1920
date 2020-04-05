@@ -30,17 +30,19 @@
 %nonassoc           tIFX
 %nonassoc           tELIF
 %nonassoc           tELSE
-%nonassoc           tBLOCKX
-%nonassoc           tLVALUE
 
-%right              '=' '@'
-%nonassoc           '?'
-%left               tAND tOR
-%left               tGE tLE tEQ tNE '>' '<'
+%nonassoc           tBLOCKNOX
+
+%right              '='
+%left               tOR
+%left               tAND
+%nonassoc           '~'
+%left               tEQ tNE
+%left               tGE tLE '>' '<'
 %left               '+' '-'
 %left               '*' '/' '%'
-%nonassoc           tUNARY
-%nonassoc           '(' '{' '[' ','
+%nonassoc           tUNARY '?'
+%nonassoc           '{' '[' '(' ','
 
 %type <node>        instr file inst_condit inst_iter function procedure declaration
 %type <sequence>    block exps vars declarations instrs identifiers
@@ -57,14 +59,7 @@ file	         : declarations                                     { /* TODO */ }
 
 /* Extra to be easier. */
 declarations   :              declaration                         { /* TODO */ }
-               | declarations declaration                         { $$ = new cdk::sequence_node(LINE, $2, $1); }
-               ;
-
-/* Extra to be easier. */
-pos_others     : '('      ')'        %prec tBLOCKX
-               | '('      ')' block
-               | '(' vars ')'        %prec tBLOCKX
-               | '(' vars ')' block
+               | declarations declaration                         { /* TODO */ }
                ;
 
 /* Extra to be easier. */
@@ -76,8 +71,6 @@ instrs         :        instr                                     { /* TODO */ }
 elif_condit    :             tELIF expr tTHEN instr               { /* TODO */ }
                | elif_condit tELIF expr tTHEN instr               { /* TODO */ }
                ;
-
-/* Extra to be easier. */
 
 declaration    : var ';'                                          { /* TODO */ }
                | function                                         { /* TODO */ }
@@ -94,29 +87,56 @@ var            :          type tIDENTIFIER                        { /* TODO */ }
                | tPUBLIC tAUTOTAG identifiers '=' exps            { /* TODO */ }
                ;
 
-function       :            type      tIDENTIFIER pos_others      { /* TODO */ }
-               |            tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
-               | tPUBLIC    type      tIDENTIFIER pos_others      { /* TODO */ }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER pos_others      { /* TODO */ }
-               | tREQUIRE   type      tIDENTIFIER pos_others      { /* TODO */ }
+function       :            type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { /* TODO */ }
+               |            tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tPUBLIC    type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tREQUIRE   type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { /* TODO */ }
+               |            type      tIDENTIFIER '('      ')' block                     { /* TODO */ }
+               |            tAUTOTAG  tIDENTIFIER '('      ')' block                     { /* TODO */ }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')' block                     { /* TODO */ }
+               | tPUBLIC    type      tIDENTIFIER '('      ')' block                     { /* TODO */ }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')' block                     { /* TODO */ }
+               | tREQUIRE   type      tIDENTIFIER '('      ')' block                     { /* TODO */ }
+               |            type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { /* TODO */ }
+               |            tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tPUBLIC    type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { /* TODO */ }
+               | tREQUIRE   type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { /* TODO */ }
+               |            type      tIDENTIFIER '(' vars ')' block                     { /* TODO */ }
+               |            tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { /* TODO */ }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { /* TODO */ }
+               | tPUBLIC    type      tIDENTIFIER '(' vars ')' block                     { /* TODO */ }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { /* TODO */ }
+               | tREQUIRE   type      tIDENTIFIER '(' vars ')' block                     { /* TODO */ }
                ;
 
-procedure      :          tPROCEDURE tIDENTIFIER pos_others       { /* TODO */ }
-               | tPUBLIC  tPROCEDURE tIDENTIFIER pos_others       { /* TODO */ }
-               | tREQUIRE tPROCEDURE tIDENTIFIER pos_others       { /* TODO */ }
+procedure      :          tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { /* TODO */ }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { /* TODO */ }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { /* TODO */ }
+               |          tPROCEDURE tIDENTIFIER '('      ')' block                      { /* TODO */ }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '('      ')' block                      { /* TODO */ }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '('      ')' block                      { /* TODO */ }
+               |          tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { /* TODO */ }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { /* TODO */ }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { /* TODO */ }
+               |          tPROCEDURE tIDENTIFIER '(' vars ')' block                      { /* TODO */ }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '(' vars ')' block                      { /* TODO */ }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')' block                      { /* TODO */ }
                ;
 
-identifiers    :                 tIDENTIFIER                      { /* TODO */ }
-               | identifiers ',' tIDENTIFIER                      { /* TODO */ }
+identifiers    :                 tIDENTIFIER                     { /* TODO */ }
+               | identifiers ',' tIDENTIFIER                     { /* TODO */ }
                ;
 
 exps           :          expr                                   { /* TODO */ }
                | exps ',' expr                                   { /* TODO */ }
                ;
 
-vars           :          var                                    { $$ = new cdk::sequence_node(LINE, $1); }
-               | vars ',' var                                    { $$ = new cdk::sequence_node(LINE, $3, $1); }
+vars           :          var                                    { /* TODO */ }
+               | vars ',' var                                    { /* TODO */ }
                ;
 
 type           : tINTTAG                                         { /* TODO */ }
@@ -147,7 +167,7 @@ instr          : expr ';'                                        { $$ = new og::
 inst_condit    : tIF expr tTHEN instr                         %prec tIFX     { $$ = new og::if_node(LINE, $2, $4); }
                | tIF expr tTHEN instr elif_condit             %prec tIFX     { /* TODO */ }
                | tIF expr tTHEN instr elif_condit tELSE instr                { /* TODO */ }
-               | tIF expr tTHEN instr             tELSE instr %prec tELSE    { $$ = new og::if_else_node(LINE, $2, $4, $6); }
+               | tIF expr tTHEN instr             tELSE instr                { $$ = new og::if_else_node(LINE, $2, $4, $6); }
                ;
 
 inst_iter      : tFOR      ';'      ';'      tDO instr           { $$ = new og::for_node(LINE, nullptr, nullptr, nullptr, $5); }
@@ -183,11 +203,12 @@ expr           : tINTEGER                                        { $$ = new cdk:
                | expr tLE  expr                                  { $$ = new cdk::le_node(LINE, $1, $3); }
                | expr tNE  expr	                                 { $$ = new cdk::ne_node(LINE, $1, $3); }
                | expr tEQ  expr	                                 { $$ = new cdk::eq_node(LINE, $1, $3); }
-               | '(' expr  ')'                                   { $$ = $2; }
+               | '(' expr ')'                                    { $$ = $2; }
+               | '[' expr ']'                                    { /* TODO */ }
                | tIDENTIFIER '('      ')'                        { /* TODO */ }
                | tIDENTIFIER '(' exps ')'                        { /* TODO */ }
                | tSIZEOF     '(' exps ')'                        { /* TODO */ }
-               | lval      %prec tLVALUE                         { $$ = new cdk::rvalue_node(LINE, $1); }
+               | lval                                            { $$ = new cdk::rvalue_node(LINE, $1); }
                | lval '?'                                        { $$ = new og::position_node(LINE, $1); }
                | lval '=' expr                                   { $$ = new cdk::assignment_node(LINE, $1, $3); }
                ;
@@ -198,7 +219,7 @@ string         :        tSTRING                                  { /* TODO */ }
 
 lval           : tIDENTIFIER                                     { $$ = new cdk::variable_node(LINE, $1); }
                | expr '[' expr ']'                               { $$ = new og::index_node(LINE, $1, $3); }
-               | expr '@' expr                                   { $$ = new og::index_tuple_node(LINE, $1, $3); }
+               | tIDENTIFIER '@' tINTEGER                        { /* TODO */ }
                ;
 
 
