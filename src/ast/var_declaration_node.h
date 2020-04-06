@@ -6,6 +6,7 @@
 #include <cdk/types/basic_type.h>
 #include <cdk/ast/basic_node.h>
 #include <cdk/ast/expression_node.h>
+#include <cdk/ast/sequence_node.h>
 #include <ast/block_node.h>
 
 namespace og {
@@ -13,11 +14,11 @@ namespace og {
   class var_declaration_node: public cdk::basic_node {
     int _qualifier;
     cdk::basic_type *_type;
-    std::vector<std::string> _identifiers;
-    tuple_node *_expressions;
+    cdk::sequence_node _identifiers;
+    cdk::expression_node *_expressions;
 
   public:
-    inline var_declaration_node(int lineno, int qualifier, cdk::basic_type *type, std::vector<std::string> identifiers, tuple_node *expressions = nullptr) :
+    inline var_declaration_node(int lineno, int qualifier, cdk::basic_type *type, cdk::sequence_node identifiers, cdk::expression_node *expressions = nullptr) :
         basic_node(lineno), _qualifier(qualifier), _type(type), _identifiers(identifiers), _expressions(expressions) {
     }
 
@@ -28,10 +29,10 @@ namespace og {
     inline cdk::basic_type *type() {
         return _type;
     }
-    inline std::vector<std::string> identifiers() {
+    inline cdk::sequence_node identifiers() {
       return _identifiers;
     }
-    inline tuple_node *expressions() {
+    inline cdk::expression_node *expressions() {
       return _expressions;
     }
 

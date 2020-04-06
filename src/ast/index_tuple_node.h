@@ -2,23 +2,22 @@
 #define __OG_AST_INDEX_TUPLE_NODE_H__
 
 #include <cdk/ast/lvalue_node.h>
-#include <cdk/ast/expression_node.h>
 
 namespace og {
 
   class index_tuple_node: public cdk::lvalue_node {
-    cdk::expression_node *_base;
-    cdk::expression_node *_index;
+    std::string _identifier;
+    int _index;
 
   public:
-    inline index_tuple_node(int lineno, cdk::expression_node *base, cdk::expression_node *index) :
-        cdk::lvalue_node(lineno), _base(base), _index(index) {}
+    inline index_tuple_node(int lineno, std::string &identifier, int index) :
+        cdk::lvalue_node(lineno), _identifier(identifier), _index(index) {}
 
   public:
-    inline cdk::expression_node *base() {
-      return _base;
+    inline std::string &identifier() {
+      return _identifier;
     }
-    inline cdk::expression_node *index() {
+    inline int index() {
       return _index;
     }
 

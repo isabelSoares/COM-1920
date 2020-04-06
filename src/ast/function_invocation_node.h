@@ -4,19 +4,15 @@
 #include <string>
 #include <cdk/ast/basic_node.h>
 #include <cdk/ast/expression_node.h>
-#include <cdk/ast/sequence_node.h>
 
 namespace og {
 
   class function_invocation_node: public cdk::expression_node {
     std::string _identifier;
-    cdk::sequence_node *_arguments;
+    cdk::expression_node *_arguments;
 
   public:
-    inline function_invocation_node(int lineno, std::string &identifier) :
-        cdk::expression_node(lineno), _identifier(identifier) {
-    }
-    inline function_invocation_node(int lineno, std::string &identifier, cdk::sequence_node *arguments) :
+    inline function_invocation_node(int lineno, std::string &identifier, cdk::expression_node *arguments = nullptr) :
         cdk::expression_node(lineno), _identifier(identifier), _arguments(arguments) {
     }
 
@@ -24,7 +20,7 @@ namespace og {
     inline std::string &identifier() {
       return _identifier;
     }
-    inline cdk::sequence_node *arguments() {
+    inline cdk::expression_node *arguments() {
       return _arguments;
     }
 
