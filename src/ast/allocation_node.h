@@ -2,25 +2,18 @@
 #define __OG_AST_ALLOCATION_NODE_H__
 
 #include <cdk/ast/expression_node.h>
+#include <cdk/ast/unary_operation_node.h>
 
 namespace og {
 
-  class allocation_node: public cdk::expression_node {
-    cdk::basic_type *_type;
-    int _size;
+  class allocation_node: public cdk::unary_operation_node {
 
   public:
-    inline allocation_node(int lineno, cdk::basic_type *type, int size) :
-        cdk::expression_node(lineno), _type(type), _size(size) {}
+    inline allocation_node(int lineno, cdk::expression_node *argument) :
+        cdk::unary_operation_node(lineno, argument) {
+    }
 
   public:
-    inline cdk::basic_type *type() {
-      return _type;
-    }
-    inline int size() {
-      return _size;
-    }
-
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_allocation_node(this, level);
     }

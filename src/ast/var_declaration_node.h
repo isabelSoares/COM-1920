@@ -11,21 +11,18 @@
 namespace og {
 
   class var_declaration_node: public cdk::basic_node {
-    std::string _qualifier;
+    int _qualifier;
     cdk::basic_type *_type;
     std::vector<std::string> _identifiers;
-    std::vector<cdk::expression_node> *_expressions;
+    tuple_node *_expressions;
 
   public:
-    inline var_declaration_node(int lineno, std::string &qualifier, cdk::basic_type *type, std::vector<std::string> identifiers, std::vector<cdk::expression_node> *expressions) :
+    inline var_declaration_node(int lineno, int qualifier, cdk::basic_type *type, std::vector<std::string> identifiers, tuple_node *expressions = nullptr) :
         basic_node(lineno), _qualifier(qualifier), _type(type), _identifiers(identifiers), _expressions(expressions) {
     }
-    inline var_declaration_node(int lineno, std::string &qualifier, cdk::basic_type *type, std::vector<std::string> identifiers) :
-        basic_node(lineno), _qualifier(qualifier), _type(type), _identifiers(identifiers) {
-    }
 
   public:
-    inline std::string &qualifier() {
+    inline int qualifier() {
         return _qualifier;
     }
     inline cdk::basic_type *type() {
@@ -34,7 +31,7 @@ namespace og {
     inline std::vector<std::string> identifiers() {
       return _identifiers;
     }
-    inline std::vector<cdk::expression_node> *expressions() {
+    inline tuple_node *expressions() {
       return _expressions;
     }
 

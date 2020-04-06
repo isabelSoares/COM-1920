@@ -10,19 +10,19 @@
 namespace og {
 
   class function_declaration_node: public cdk::basic_node {
-    std::string _qualifier;
+    int _qualifier;
     cdk::basic_type *_type;
     std::string _identifier;
     cdk::sequence_node *_arguments;
     block_node *_block;
 
   public:
-    inline function_declaration_node(int lineno, std::string &qualifier, cdk::basic_type *type, std::string &identifier, cdk::sequence_node *arguments, block_node *block) :
+    inline function_declaration_node(int lineno, int qualifier, cdk::basic_type *type, std::string &identifier, cdk::sequence_node *arguments, block_node *block) :
         basic_node(lineno), _qualifier(qualifier), _type(type), _identifier(identifier), _arguments(arguments), _block(block) {
     }
 
   public:
-    inline std::string &qualifier() {
+    inline int qualifier() {
         return _qualifier;
     }
     inline cdk::basic_type *type() {
