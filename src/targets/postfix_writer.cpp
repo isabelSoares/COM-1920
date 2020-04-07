@@ -171,10 +171,11 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
   // main function node.
 
   // generate the main function (RTS mandates that its name be "_main")
+
   _pf.TEXT();
   _pf.ALIGN();
-  _pf.GLOBAL("og", _pf.FUNC());
-  _pf.LABEL("og");
+  _pf.GLOBAL("_main", _pf.FUNC());
+  _pf.LABEL("_main");
   _pf.ENTER(0);  // Simple doesn't implement local variables
 
   node->block()->accept(this, lvl);
