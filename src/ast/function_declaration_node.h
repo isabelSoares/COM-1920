@@ -3,30 +3,27 @@
 
 #include <string>
 #include <cdk/types/basic_type.h>
-#include <cdk/ast/basic_node.h>
 #include <cdk/ast/sequence_node.h>
+#include <cdk/ast/typed_node.h>
 #include <ast/block_node.h>
 
 namespace og {
 
-  class function_declaration_node: public cdk::basic_node {
+  class function_declaration_node: public cdk::typed_node {
     int _qualifier;
-    cdk::basic_type *_type;
     std::string _identifier;
     cdk::sequence_node *_arguments;
     block_node *_block;
 
   public:
-    inline function_declaration_node(int lineno, int qualifier, cdk::basic_type *type, std::string &identifier, cdk::sequence_node *arguments, block_node *block) :
-        basic_node(lineno), _qualifier(qualifier), _type(type), _identifier(identifier), _arguments(arguments), _block(block) {
+    inline function_declaration_node(int lineno, int qualifier, std::shared_ptr<cdk::basic_type> *type, std::string &identifier, cdk::sequence_node *arguments, block_node *block) :
+        typed_node(lineno), _qualifier(qualifier), _identifier(identifier), _arguments(arguments), _block(block) {
+          this->type(*type);
     }
 
   public:
     inline int qualifier() {
         return _qualifier;
-    }
-    inline cdk::basic_type *type() {
-        return _type;
     }
     inline std::string &identifier() {
       return _identifier;

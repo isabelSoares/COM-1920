@@ -11,16 +11,18 @@
 %}
 
 %union {
-  int                         i;	               /* integer value */
-  double                      r;
-  std::string                 *s;	               /* symbol name or string literal */
-  cdk::basic_node             *node;	           /* node pointer */
-  cdk::basic_type             *type;             /* expression type */
-  og::tuple_node              *tuple;
-  cdk::sequence_node          *sequence;
-  cdk::expression_node        *expression;       /* expression nodes */
-  cdk::lvalue_node            *lvalue;
-  og::block_node              *block;
+  int                                   i;	               /* integer value */
+  double                                r;
+  std::string                           *s;	               /* symbol name or string literal */
+  cdk::basic_node                       *node;	           /* node pointer */
+  cdk::basic_type                       *type;             /* expression type */
+  std::shared_ptr<cdk::basic_type>      *shared_type;
+  std::vector<std::string>              *vector;
+  og::tuple_node                        *tuple;
+  cdk::sequence_node                    *sequence;
+  cdk::expression_node                  *expression;       /* expression nodes */
+  cdk::lvalue_node                      *lvalue;
+  og::block_node                        *block;
 };
 
 %token <i>          tINTEGER
@@ -48,13 +50,14 @@
 %nonassoc           '{' '[' '(' ','
 
 %type <block>       block
-%type <node>        instr file inst_condit inst_iter function procedure declaration elif_condit
-%type <sequence>    vars declarations instrs identifiers
+%type <node>        instr file inst_condit inst_iter function procedure declaration elif_condit var
+%type <sequence>    vars declarations instrs
+%type <vector>      identifiers
 %type <expression>  expr
-%type <type>        type
+%type <shared_type> type
 %type <tuple>       exps
 %type <s>           string
-%type <lvalue>      lval var
+%type <lvalue>      lval
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -85,40 +88,40 @@ declaration    : var ';'                                          { $$ = $1; }
                | procedure                                        { $$ = $1; }
                ;
 
-var            :          type tIDENTIFIER                        { /* TODO */ }
-               | tPUBLIC  type tIDENTIFIER                        { /* TODO */ }
-               | tREQUIRE type tIDENTIFIER                        { /* TODO */ }
-               |          type tIDENTIFIER    '=' expr            { /* TODO */ }
-               | tPUBLIC  type tIDENTIFIER    '=' expr            { /* TODO */ }
-               | tREQUIRE type tIDENTIFIER    '=' expr            { /* TODO */ }
-               |         tAUTOTAG identifiers '=' exps            { /* TODO */ }
-               | tPUBLIC tAUTOTAG identifiers '=' exps            { /* TODO */ }
+var            :          type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, 0, $1,                                       $2, nullptr); }
+               | tPUBLIC  type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, 1, $2,                                       $3, nullptr); }
+               | tREQUIRE type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, 2, $2,                                       $3, nullptr); }
+               |          type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, 0, $1,                                       $2, $4     ); }
+               | tPUBLIC  type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, 1, $2,                                       $3, $5     ); }
+               | tREQUIRE type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, 2, $2,                                       $3, $5     ); }
+               |         tAUTOTAG identifiers '=' exps            { $$ = new og::var_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), $2, $4     ); }
+               | tPUBLIC tAUTOTAG identifiers '=' exps            { $$ = new og::var_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), $3, $5     ); }
                ;
 
-function       :            type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, $1     , *$2, nullptr, nullptr); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, nullptr, nullptr); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, nullptr, nullptr); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, $2     , *$3, nullptr, nullptr); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, nullptr, nullptr); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, $2     , *$3, nullptr, nullptr); delete $3; }
-               |            type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 0, $1     , *$2, nullptr, $5     ); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, nullptr, $5     ); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, nullptr, $6     ); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 1, $2     , *$3, nullptr, $6     ); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, nullptr, $6     ); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 2, $2     , *$3, nullptr, $6     ); delete $3; }
-               |            type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, $1     , *$2, $4     , nullptr); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, $4     , nullptr); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, $5     , nullptr); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, $2     , *$3, $5     , nullptr); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, $5     , nullptr); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, $2     , *$3, $5     , nullptr); delete $3; }
-               |            type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 0, $1     , *$2, $4     , $6     ); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, $4     , $6     ); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, $5     , $7     ); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 1, $2     , *$3, $5     , $7     ); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, $5     , $7     ); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 2, $2     , *$3, $5     , $7     ); delete $3; }
+function       :            type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, nullptr, nullptr); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, nullptr, nullptr); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, nullptr); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, nullptr, nullptr); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, nullptr); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, nullptr, nullptr); delete $3; }
+               |            type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, nullptr, $5     ); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, nullptr, $5     ); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, $6     ); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, nullptr, $6     ); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, $6     ); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, nullptr, $6     ); delete $3; }
+               |            type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, $4     , nullptr); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, $4     , nullptr); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , nullptr); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, $5     , nullptr); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , nullptr); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, $5     , nullptr); delete $3; }
+               |            type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, $4     , $6     ); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, $4     , $6     ); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , $7     ); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, $5     , $7     ); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , $7     ); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, $5     , $7     ); delete $3; }
                ;
 
 procedure      :          tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, nullptr, nullptr); delete $2; }
@@ -135,8 +138,8 @@ procedure      :          tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCK
                | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, $5     , $7     ); delete $3; }
                ;
 
-identifiers    :                 tIDENTIFIER                     { /* TODO */ }
-               | identifiers ',' tIDENTIFIER                     { /* TODO */ }
+identifiers    :                 tIDENTIFIER                     { $$ = new std::vector<std::string>(); $$->push_back(*$1); delete $1; }
+               | identifiers ',' tIDENTIFIER                     { $$ = $1;                             $$->push_back(*$3); delete $3; }
                ;
 
 exps           :          expr                                   { $$ = new og::tuple_node(LINE, $1);     }
@@ -147,11 +150,11 @@ vars           :          var                                    { $$ = new cdk:
                | vars ',' var                                    { $$ = new cdk::sequence_node(LINE, $3, $1); }
                ;
 
-type           : tINTTAG                                         { $$ = $1; }
-               | tREALTAG                                        { $$ = $1; }
-               | tSTRINGTAG                                      { $$ = $1; }
-               | tPOINTERTAG '<' tAUTOTAG '>'                    { /* TODO */ }
-               | tPOINTERTAG '<' type     '>'                    { /* TODO */ }
+type           : tINTTAG                                         { $$ = new std::shared_ptr<cdk::basic_type>($1); }
+               | tREALTAG                                        { $$ = new std::shared_ptr<cdk::basic_type>($1); }
+               | tSTRINGTAG                                      { $$ = new std::shared_ptr<cdk::basic_type>($1); }
+               | tPOINTERTAG '<' tAUTOTAG '>'                    { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::reference_type(sizeof(char*), * new std::shared_ptr<cdk::basic_type>($3))); }
+               | tPOINTERTAG '<' type     '>'                    { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::reference_type(sizeof(char*), *$3)); }
                ;
 
 block          : '{'                      '}'                    { $$ = new og::block_node(LINE, nullptr, nullptr); }
@@ -219,7 +222,7 @@ expr           : tINTEGER                                        { $$ = new cdk:
                | lval '=' expr                                   { $$ = new cdk::assignment_node(LINE, $1, $3);                            }
                ;
 
-string         :        tSTRING                                  { $$ = $1; }
+string         :        tSTRING                                  { $$ = $1;                                               }
                | string tSTRING                                  { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
                ;
 
