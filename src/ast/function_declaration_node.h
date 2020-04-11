@@ -18,7 +18,8 @@ namespace og {
   public:
     inline function_declaration_node(int lineno, int qualifier, std::shared_ptr<cdk::basic_type> *type, std::string &identifier, cdk::sequence_node *arguments, block_node *block) :
         typed_node(lineno), _qualifier(qualifier), _identifier(identifier), _arguments(arguments), _block(block) {
-          this->type(*type);
+          if (type != nullptr)
+            this->type(*type);
     }
 
   public:

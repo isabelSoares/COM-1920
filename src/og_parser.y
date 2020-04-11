@@ -33,8 +33,8 @@
 %token <type>       tINTTAG tREALTAG tSTRINGTAG tAUTOTAG tPOINTERTAG
 
 %nonassoc           tIFX
-%nonassoc           tELIF tELSE
 %nonassoc           tELIFX
+%nonassoc           tELIF tELSE
 
 %nonassoc           tBLOCKNOX
 
@@ -78,7 +78,7 @@ instrs         :        instr                                     { $$ = new cdk
                ;
 
 /* Extra to be easier. */
-elif_condit    : tELSE block                                      { $$ = $2;                                     }
+elif_condit    : tELSE instr                                      { $$ = $2;                                     }
                | tELIF expr tTHEN instr             %prec tELIFX  { $$ = new og::if_node(LINE, $2, $4);          }
                | tELIF expr tTHEN instr elif_condit               { $$ = new og::if_else_node(LINE, $2, $4, $5); }
                ;
