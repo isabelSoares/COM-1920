@@ -54,12 +54,57 @@
 <X_STRING>.                             *yylval.s += yytext;
 <X_STRING>\n                            yyerror("newline in string");
 
-[0-9]+                                  yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
-"0x"[A-Fa-f0-9]+                        yylval.i = strtol(yytext, nullptr, 0); return tINTEGER;
+[0-9]+                                  {
+                                            try {
+                                                yylval.i = std::stoi(yytext, nullptr, 10);
+                                                return tINTEGER;
+                                            } catch (const std::invalid_argument& e) {
+                                                yyerror("not an integer");
+                                            } catch (const std::out_of_range& e) {
+                                                yyerror("integer out of range");
+                                            }
+                                        }
+"0x"[A-Fa-f0-9]+                        {
+                                            try {
+                                                yylval.i = std::stoi(yytext, nullptr, 0);
+                                                return tINTEGER;
+                                            } catch (const std::invalid_argument& e) {
+                                                yyerror("not an integer");
+                                            } catch (const std::out_of_range& e) {
+                                                yyerror("integer out of range");
+                                            }
+                                        }
 
-[0-9]*\.[0-9]+([Ee][-+]?[0-9]+)?        yylval.r = std::stod(yytext); return tREAL;
-[0-9]+\.[0-9]*([Ee][-+]?[0-9]+)?        yylval.r = std::stod(yytext); return tREAL;
-[0-9]+([Ee][-+]?[0-9]+)                 yylval.r = std::stod(yytext); return tREAL;
+[0-9]*\.[0-9]+([Ee][-+]?[0-9]+)?        {
+                                            try {
+                                                yylval.r = std::stod(yytext);
+                                                return tREAL;
+                                            } catch (const std::invalid_argument& e) {
+                                                yyerror("not an double");
+                                            } catch (const std::out_of_range& e) {
+                                                yyerror("double out of range");
+                                            }
+                                        }
+[0-9]+\.[0-9]*([Ee][-+]?[0-9]+)?        {
+                                            try {
+                                                yylval.r = std::stod(yytext);
+                                                return tREAL;
+                                            } catch (const std::invalid_argument& e) {
+                                                yyerror("not an double");
+                                            } catch (const std::out_of_range& e) {
+                                                yyerror("double out of range");
+                                            }
+                                        }
+[0-9]+([Ee][-+]?[0-9]+)                 {
+                                            try {
+                                                yylval.r = std::stod(yytext);
+                                                return tREAL;
+                                            } catch (const std::invalid_argument& e) {
+                                                yyerror("not an double");
+                                            } catch (const std::out_of_range& e) {
+                                                yyerror("double out of range");
+                                            }
+                                        }
 
 "/*"                                    yy_push_state(X_COMMENT);
 <X_COMMENT>"/*"                         yy_push_state(X_COMMENT);

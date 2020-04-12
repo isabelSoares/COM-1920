@@ -29,7 +29,7 @@
 %token <r>          tREAL
 %token <s>          tIDENTIFIER tSTRING
 %token              tFOR tIF tELSE tELIF tINPUT tSIZEOF
-%token              tTHEN tDO tPUBLIC tREQUIRE tRETURN tPOINTER tWRITE tWRITELN tBREAK tCONTINUE tPROCEDURE
+%token              tTHEN tDO tPUBLIC tPRIVATE tREQUIRE tRETURN tPOINTER tWRITE tWRITELN tBREAK tCONTINUE tPROCEDURE
 %token <type>       tINTTAG tREALTAG tSTRINGTAG tAUTOTAG tPOINTERTAG
 
 %nonassoc           tIFX
@@ -88,54 +88,54 @@ declaration    : var ';'                                          { $$ = $1; }
                | procedure                                        { $$ = $1; }
                ;
 
-var            :          type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, 0, $1,                                       $2, nullptr); }
-               | tPUBLIC  type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, 1, $2,                                       $3, nullptr); }
-               | tREQUIRE type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, 2, $2,                                       $3, nullptr); }
-               |          type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, 0, $1,                                       $2, $4     ); }
-               | tPUBLIC  type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, 1, $2,                                       $3, $5     ); }
-               | tREQUIRE type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, 2, $2,                                       $3, $5     ); }
-               |         tAUTOTAG identifiers '=' exps            { $$ = new og::var_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), $2, $4     ); }
-               | tPUBLIC tAUTOTAG identifiers '=' exps            { $$ = new og::var_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), $3, $5     ); }
+var            :          type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, tPRIVATE, $1,                                       $2, nullptr); }
+               | tPUBLIC  type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, tPUBLIC , $2,                                       $3, nullptr); }
+               | tREQUIRE type tIDENTIFIER                        { $$ = new og::var_declaration_node(LINE, tREQUIRE, $2,                                       $3, nullptr); }
+               |          type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, tPRIVATE, $1,                                       $2, $4     ); }
+               | tPUBLIC  type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, tPUBLIC , $2,                                       $3, $5     ); }
+               | tREQUIRE type tIDENTIFIER    '=' expr            { $$ = new og::var_declaration_node(LINE, tREQUIRE, $2,                                       $3, $5     ); }
+               |         tAUTOTAG identifiers '=' exps            { $$ = new og::var_declaration_node(LINE, tPRIVATE, new std::shared_ptr<cdk::basic_type>($1), $2, $4     ); }
+               | tPUBLIC tAUTOTAG identifiers '=' exps            { $$ = new og::var_declaration_node(LINE, tPUBLIC , new std::shared_ptr<cdk::basic_type>($2), $3, $5     ); }
                ;
 
-function       :            type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, nullptr, nullptr); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, nullptr, nullptr); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, nullptr); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, nullptr, nullptr); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, nullptr); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, nullptr, nullptr); delete $3; }
-               |            type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, nullptr, $5     ); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, nullptr, $5     ); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, $6     ); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, nullptr, $6     ); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, $6     ); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, nullptr, $6     ); delete $3; }
-               |            type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, $4     , nullptr); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, $4     , nullptr); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , nullptr); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, $5     , nullptr); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , nullptr); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, $5     , nullptr); delete $3; }
-               |            type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 0, $1                                      , *$2, $4     , $6     ); delete $2; }
-               |            tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 0, new std::shared_ptr<cdk::basic_type>($1), *$2, $4     , $6     ); delete $2; }
-               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 1, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , $7     ); delete $3; }
-               | tPUBLIC    type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 1, $2                                      , *$3, $5     , $7     ); delete $3; }
-               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 2, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , $7     ); delete $3; }
-               | tREQUIRE   type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, 2, $2                                      , *$3, $5     , $7     ); delete $3; }
+function       :            type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPRIVATE, $1                                      , *$2, nullptr, nullptr); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPRIVATE, new std::shared_ptr<cdk::basic_type>($1), *$2, nullptr, nullptr); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPUBLIC , new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, nullptr); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPUBLIC , $2                                      , *$3, nullptr, nullptr); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tREQUIRE, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, nullptr); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '('      ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tREQUIRE, $2                                      , *$3, nullptr, nullptr); delete $3; }
+               |            type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, tPRIVATE, $1                                      , *$2, nullptr, $5     ); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, tPRIVATE, new std::shared_ptr<cdk::basic_type>($1), *$2, nullptr, $5     ); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, tPUBLIC , new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, $6     ); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, tPUBLIC , $2                                      , *$3, nullptr, $6     ); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, tREQUIRE, new std::shared_ptr<cdk::basic_type>($2), *$3, nullptr, $6     ); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '('      ')' block                     { $$ = new og::function_declaration_node(LINE, tREQUIRE, $2                                      , *$3, nullptr, $6     ); delete $3; }
+               |            type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPRIVATE, $1                                      , *$2, $4     , nullptr); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPRIVATE, new std::shared_ptr<cdk::basic_type>($1), *$2, $4     , nullptr); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPUBLIC , new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , nullptr); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tPUBLIC , $2                                      , *$3, $5     , nullptr); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tREQUIRE, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , nullptr); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX     { $$ = new og::function_declaration_node(LINE, tREQUIRE, $2                                      , *$3, $5     , nullptr); delete $3; }
+               |            type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, tPRIVATE, $1                                      , *$2, $4     , $6     ); delete $2; }
+               |            tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, tPRIVATE, new std::shared_ptr<cdk::basic_type>($1), *$2, $4     , $6     ); delete $2; }
+               | tPUBLIC    tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, tPUBLIC , new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , $7     ); delete $3; }
+               | tPUBLIC    type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, tPUBLIC , $2                                      , *$3, $5     , $7     ); delete $3; }
+               | tREQUIRE   tAUTOTAG  tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, tREQUIRE, new std::shared_ptr<cdk::basic_type>($2), *$3, $5     , $7     ); delete $3; }
+               | tREQUIRE   type      tIDENTIFIER '(' vars ')' block                     { $$ = new og::function_declaration_node(LINE, tREQUIRE, $2                                      , *$3, $5     , $7     ); delete $3; }
                ;
 
-procedure      :          tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, nullptr, nullptr); delete $2; }
-               | tPUBLIC  tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, nullptr, nullptr); delete $3; }
-               | tREQUIRE tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, nullptr, nullptr); delete $3; }
-               |          tPROCEDURE tIDENTIFIER '('      ')' block                      { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, nullptr, $5     ); delete $2; }
-               | tPUBLIC  tPROCEDURE tIDENTIFIER '('      ')' block                      { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, nullptr, $6     ); delete $3; }
-               | tREQUIRE tPROCEDURE tIDENTIFIER '('      ')' block                      { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, nullptr, $6     ); delete $3; }
-               |          tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, $4     , nullptr); delete $2; }
-               | tPUBLIC  tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, $5     , nullptr); delete $3; }
-               | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, $5     , nullptr); delete $3; }
-               |          tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, 0, nullptr, *$2, $4     , $6     ); delete $2; }
-               | tPUBLIC  tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, 1, nullptr, *$3, $5     , $7     ); delete $3; }
-               | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, 2, nullptr, *$3, $5     , $7     ); delete $3; }
+procedure      :          tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, tPRIVATE, nullptr, *$2, nullptr, nullptr); delete $2; }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, tPUBLIC , nullptr, *$3, nullptr, nullptr); delete $3; }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '('      ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, tREQUIRE, nullptr, *$3, nullptr, nullptr); delete $3; }
+               |          tPROCEDURE tIDENTIFIER '('      ')' block                      { $$ = new og::function_declaration_node(LINE, tPRIVATE, nullptr, *$2, nullptr, $5     ); delete $2; }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '('      ')' block                      { $$ = new og::function_declaration_node(LINE, tPUBLIC , nullptr, *$3, nullptr, $6     ); delete $3; }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '('      ')' block                      { $$ = new og::function_declaration_node(LINE, tREQUIRE, nullptr, *$3, nullptr, $6     ); delete $3; }
+               |          tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, tPRIVATE, nullptr, *$2, $4     , nullptr); delete $2; }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, tPUBLIC , nullptr, *$3, $5     , nullptr); delete $3; }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')'       %prec tBLOCKNOX      { $$ = new og::function_declaration_node(LINE, tREQUIRE, nullptr, *$3, $5     , nullptr); delete $3; }
+               |          tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, tPRIVATE, nullptr, *$2, $4     , $6     ); delete $2; }
+               | tPUBLIC  tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, tPUBLIC , nullptr, *$3, $5     , $7     ); delete $3; }
+               | tREQUIRE tPROCEDURE tIDENTIFIER '(' vars ')' block                      { $$ = new og::function_declaration_node(LINE, tREQUIRE, nullptr, *$3, $5     , $7     ); delete $3; }
                ;
 
 identifiers    :                 tIDENTIFIER                     { $$ = new std::vector<std::string>(); $$->push_back(*$1); delete $1; }
