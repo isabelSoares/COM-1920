@@ -11,7 +11,7 @@
 // don't change this
 #define yyerror LexerError
 %}
-%x X_STRING X_COMMENT
+%x X_STRING X_COMMENT X_STRING_NO_MORE
 %%
 
 "&&"                   return tAND; 
@@ -39,6 +39,7 @@
 "public"               return tPUBLIC;
 "require"              return tREQUIRE;
 "procedure"            return tPROCEDURE;
+"nullptr"              return tNULLPTR;
 
 "int"                  return tINTTAG;
 "real"                 return tREALTAG;
@@ -51,8 +52,13 @@
 \"                                      yy_push_state(X_STRING); yylval.s = new std::string("");
 <X_STRING>\"                            yy_pop_state(); return tSTRING;
 <X_STRING>\\\"                          *yylval.s += yytext + 1;
+<X_STRING>"\0"                          yy_pop_state(); yy_push_state(X_STRING_NO_MORE); yylval.s = new std::string("");
 <X_STRING>.                             *yylval.s += yytext;
 <X_STRING>\n                            yyerror("newline in string");
+
+<X_STRING_NO_MORE>\"                    yy_pop_state();
+<X_STRING_NO_MORE>.                     ;
+<X_STRING_NO_MORE>\n                    yyerror("newline in string");
 
 [0-9]+                                  {
                                             try {

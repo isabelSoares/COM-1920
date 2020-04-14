@@ -140,7 +140,7 @@ void og::xml_writer::do_assignment_node(cdk::assignment_node * const node, int l
 void og::xml_writer::do_function_declaration_node(og::function_declaration_node * const node, int lvl) {
   // TODO: type
   os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "' qualifier='"
-       << qualifier_name(node->qualifier()) << "'>" << std::endl;
+       << qualifier_name(node->qualifier()) << "' type='" << to_string(node->type()) << "'>" << std::endl;
 
   openTag("arguments", lvl);
   if (node->arguments()) {
@@ -333,7 +333,8 @@ void og::xml_writer::do_position_node(og::position_node *const node, int lvl) {
 
 void og::xml_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
   //ASSERT_SAFE_EXPRESSIONS;
-  os() << std::string(lvl, ' ') << "<" << node->label() << " qualifier='" << qualifier_name(node->qualifier()) << "' size='" << node->identifiers()->size() << "'>" << std::endl;
+  os() << std::string(lvl, ' ') << "<" << node->label() << " qualifier='" << qualifier_name(node->qualifier()) 
+       << "' type='" << to_string(node->type()) << "' size='" << node->identifiers()->size() << "'>" << std::endl;
   if (node->expressions()) {
     node->expressions()->accept(this, lvl + 2);
   }
