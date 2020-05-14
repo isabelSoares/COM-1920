@@ -19,7 +19,16 @@ void og::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
   // EMPTY
 }
 void og::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  int lbl1;
+  node->left()->accept(this, lvl + 2);
+  _pf.DUP32();
+  _pf.JZ(mklbl(lbl1 = ++_lbl));
+  node->right()->accept(this, lvl + 2);
+  _pf.AND();
+  _pf.ALIGN();
+  _pf.LABEL(mklbl(lbl1));
 }
 void og::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
   // EMPTY
@@ -172,10 +181,17 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
 
   // generate the main function (RTS mandates that its name be "_main")
 
+  std::string label_name;
+  if (!node->identifier().compare("og"))
+    label_name = "_main";
+  else if (!node->identifier().compare("_main"))
+    label_name = "og";
+  else label_name = node->identifier();
+
   _pf.TEXT();
   _pf.ALIGN();
-  _pf.GLOBAL("_main", _pf.FUNC());
-  _pf.LABEL("_main");
+  _pf.GLOBAL(label_name, _pf.FUNC());
+  _pf.LABEL(label_name);
   _pf.ENTER(0);  // Simple doesn't implement local variables
 
   node->block()->accept(this, lvl);
@@ -221,7 +237,9 @@ void og::postfix_writer::do_write_node(og::write_node * const node, int lvl) {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
   }
-  _pf.CALL("println"); // print a newline
+
+  if (node->new_line())
+    _pf.CALL("println"); // print a newline
 }
 
 //---------------------------------------------------------------------------
@@ -274,7 +292,10 @@ void og::postfix_writer::do_if_else_node(og::if_else_node * const node, int lvl)
 //---------------------------------------------------------------------------
 
 void og::postfix_writer::do_block_node(og::block_node *const node, int lvl) {
-  // EMPTY
+  _symtab.push(); // for block-local vars
+  if (node->declarations()) node->declarations()->accept(this, lvl + 2);
+  if (node->instructions()) node->instructions()->accept(this, lvl + 2);
+  _symtab.pop();
 }
 void og::postfix_writer::do_break_node(og::break_node *const node, int lvl) {
   // EMPTY
@@ -304,10 +325,13 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
   // EMPTY
 }
 void og::postfix_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
-  // EMPTY
+  for (size_t i = 0; i < node->size(); i++) {
+    node->node(i)->accept(this, lvl);
+  }
 }
 void og::postfix_writer::do_identity_node(og::identity_node *const node, int lvl) {   
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl);
 }
 void og::postfix_writer::do_nullptr_node(og::nullptr_node *const node, int lvl) {
   // EMPTY

@@ -26,10 +26,10 @@ void og::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
-  // EMPTY
+  processBinaryExpression(node, lvl);
 }
 void og::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
-  // EMPTY
+  processBinaryExpression(node, lvl);
 }
 
 //---------------------------------------------------------------------------
@@ -220,10 +220,15 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
   // EMPTY
 }
 void og::type_checker::do_tuple_node(og::tuple_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+
+  if (node->size() == 1) {
+    node->node(0)->accept(this, lvl);
+    node->type(node->node(0)->type());
+  }
 }
 void og::type_checker::do_identity_node(og::identity_node *const node, int lvl) {
-  // EMPTY
+  processUnaryExpression(node, lvl);
 }
 void og::type_checker::do_nullptr_node(og::nullptr_node *const node, int lvl) {
   // EMPTY

@@ -56,7 +56,7 @@ void og::xml_writer::do_string_node(cdk::string_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_unary_operation(cdk::unary_operation_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
@@ -69,7 +69,7 @@ void og::xml_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_binary_operation(cdk::binary_operation_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->left()->accept(this, lvl + 2);
   node->right()->accept(this, lvl + 2);
@@ -113,19 +113,19 @@ void og::xml_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_variable_node(cdk::variable_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   os() << std::string(lvl, ' ') << "<" << node->label() << ">" << node->name() << "</" << node->label() << ">" << std::endl;
 }
 
 void og::xml_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->lvalue()->accept(this, lvl + 2);
   closeTag(node, lvl);
 }
 
 void og::xml_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
 
   node->lvalue()->accept(this, lvl);
@@ -159,14 +159,14 @@ void og::xml_writer::do_function_declaration_node(og::function_declaration_node 
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_evaluation_node(og::evaluation_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
 }
 
 void og::xml_writer::do_write_node(og::write_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   os() << std::string(lvl, ' ') << "<" << node->label() << " new_line='" << (node->new_line() ? "true" : "false") << "'>" << std::endl;
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
@@ -175,7 +175,7 @@ void og::xml_writer::do_write_node(og::write_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_input_node(og::input_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   closeTag(node, lvl);
 }
@@ -183,7 +183,7 @@ void og::xml_writer::do_input_node(og::input_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_for_node(og::for_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
 
   openTag("initialization", lvl + 2);
@@ -213,7 +213,7 @@ void og::xml_writer::do_for_node(og::for_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_if_node(og::if_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   openTag("condition", lvl + 2);
   node->condition()->accept(this, lvl + 4);
@@ -225,7 +225,7 @@ void og::xml_writer::do_if_node(og::if_node * const node, int lvl) {
 }
 
 void og::xml_writer::do_if_else_node(og::if_else_node * const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   openTag("condition", lvl + 2);
   node->condition()->accept(this, lvl + 4);
@@ -270,7 +270,7 @@ void og::xml_writer::do_continue_node(og::continue_node *const node, int lvl) {
 }
 
 void og::xml_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "'>" << std::endl;
 
   openTag("arguments", lvl + 2);
@@ -281,7 +281,7 @@ void og::xml_writer::do_function_invocation_node(og::function_invocation_node *c
 }
 
 void og::xml_writer::do_return_node(og::return_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
 
   openTag(node, lvl);
   if (node->return_value())
@@ -296,7 +296,7 @@ void og::xml_writer::do_allocation_node(og::allocation_node *const node, int lvl
 }
 
 void og::xml_writer::do_index_node(og::index_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
 
   openTag("base", lvl + 2);
@@ -311,7 +311,7 @@ void og::xml_writer::do_index_node(og::index_node *const node, int lvl) {
 }
 
 void og::xml_writer::do_index_tuple_node(og::index_tuple_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
 
   openTag("identifier", lvl + 2);
@@ -326,14 +326,14 @@ void og::xml_writer::do_index_tuple_node(og::index_tuple_node *const node, int l
 }
 
 void og::xml_writer::do_position_node(og::position_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->lvalue()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 
 void og::xml_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   os() << std::string(lvl, ' ') << "<" << node->label() << " qualifier='" << qualifier_name(node->qualifier()) 
        << "' type='" << to_string(node->type()) << "' size='" << node->identifiers()->size() << "'>" << std::endl;
   if (node->expressions()) {
@@ -344,7 +344,7 @@ void og::xml_writer::do_var_declaration_node(og::var_declaration_node *const nod
 }
 
 void og::xml_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
-  //ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   os() << std::string(lvl, ' ') << "<tuple_node size='" << node->size() << "'>" << std::endl;
   for (size_t i = 0; i < node->size(); i++)
     node->node(i)->accept(this, lvl + 2);
