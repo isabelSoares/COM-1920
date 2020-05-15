@@ -1,8 +1,11 @@
 #include <string>
 #include <sstream>
 #include "targets/type_checker.h"
+#include "targets/frame_size_calculator.h"
 #include "targets/postfix_writer.h"
 #include "ast/all.h"  // all.h is automatically generated
+
+#include "og_parser.tab.h"
 
 //---------------------------------------------------------------------------
 
@@ -180,33 +183,69 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
   // main function node.
 
   // generate the main function (RTS mandates that its name be "_main")
+  if (_inFunctionBody || _inFunctionArgs) {
+    //error(node->lineno(), "cannot define function in body or in arguments");
+    return;
+  }
 
-  std::string label_name;
-  if (!node->identifier().compare("og"))
-    label_name = "_main";
-  else if (!node->identifier().compare("_main"))
-    label_name = "og";
-  else label_name = node->identifier();
+  ASSERT_SAFE_EXPRESSIONS;
 
-  _pf.TEXT();
-  _pf.ALIGN();
-  _pf.GLOBAL(label_name, _pf.FUNC());
-  _pf.LABEL(label_name);
-  _pf.ENTER(0);  // Simple doesn't implement local variables
+  if (!new_symbol()) return;
 
-  node->block()->accept(this, lvl);
+  if (node->block()){
+    _function = new_symbol();
+    _functions_to_declare.erase(_function->name());
+  }
+  else {
+    std::shared_ptr<og::symbol> function = new_symbol();
+    _functions_to_declare.insert(function->name());
+  }
+  reset_new_symbol();
 
-  // end the main function
-  _pf.INT(0);
-  _pf.STFVAL32();
-  _pf.LEAVE();
-  _pf.RET();
+  if (node->block()){
 
-  // these are just a few library function imports
-  _pf.EXTERN("readi");
-  _pf.EXTERN("printi");
-  _pf.EXTERN("prints");
-  _pf.EXTERN("println");
+    _offset = 8; // prepare for arguments (4: remember to account for return address)
+    _symtab.push(); // scope of args
+    if (node->arguments()) {
+      _inFunctionArgs = true; //FIXME really needed?
+      for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
+        cdk::basic_node *arg = node->arguments()->node(ix);
+        if (arg == nullptr) break; // this means an empty sequence of arguments
+        arg->accept(this, 0); // the function symbol is at the top of the stack
+      }
+      _inFunctionArgs = false; //FIXME really needed?
+    }
+
+    _pf.TEXT();
+    _pf.ALIGN();
+    if (node->qualifier() == tPUBLIC) _pf.GLOBAL(_function->name(), _pf.FUNC());
+    _pf.LABEL(_function->name());
+
+    // compute stack size to be reserved for local variables
+    frame_size_calculator lsc(_compiler, _symtab);
+    node->accept(&lsc, lvl);
+    _pf.ENTER(lsc.localsize()); // total stack size reserved for local variables
+
+    // the following flag is a slight hack: it won't work with nested functions
+    _inFunctionBody = true;
+    // prepare for local variables but remember the return value (first below fp)
+    _offset = -_function->type()->size();
+    os() << "        ;; before body " << std::endl;
+    node->block()->accept(this, lvl + 4); // block has its own scope
+    os() << "        ;; after body " << std::endl;
+    _inFunctionBody = false;
+    _symtab.pop(); // scope of arguments
+
+    //DAVID: nasty hack!
+    _pf.LEAVE();
+    _pf.RET();
+
+    if (node->identifier() == "og") {
+      // declare external functions
+      for (std::string s : _functions_to_declare)
+        _pf.EXTERN(s);
+    }
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -228,18 +267,26 @@ void og::postfix_writer::do_write_node(og::write_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->argument()->accept(this, lvl); // determine the value to print
   if (node->argument()->is_typed(cdk::TYPE_INT)) {
+     _functions_to_declare.insert("printi");
     _pf.CALL("printi");
     _pf.TRASH(4); // delete the printed value
   } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
+    _functions_to_declare.insert("prints");
     _pf.CALL("prints");
     _pf.TRASH(4); // delete the printed value's address
+  }  else if (node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
+    _functions_to_declare.insert("printd");
+    _pf.CALL("printd");
+    _pf.TRASH(8); // delete the printed double value's address
   } else {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
   }
 
-  if (node->new_line())
+  if (node->new_line()) {
+    _functions_to_declare.insert("println");
     _pf.CALL("println"); // print a newline
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -307,7 +354,24 @@ void og::postfix_writer::do_function_invocation_node(og::function_invocation_nod
   // EMPTY
 }
 void og::postfix_writer::do_return_node(og::return_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  // should not reach here without returning a value (if not void)
+  if (!_function->is_typed(cdk::TYPE_VOID)) {
+    node->return_value()->accept(this, lvl + 2);
+
+    if (_function->is_typed(cdk::TYPE_INT) || _function->is_typed(cdk::TYPE_STRING) || _function->is_typed(cdk::TYPE_POINTER)) {
+      _pf.STFVAL32();
+    } else if (_function->is_typed(cdk::TYPE_DOUBLE)) {
+      if (node->return_value()->is_typed(cdk::TYPE_INT))
+        _pf.I2D();
+      _pf.STFVAL64();
+    } else {
+      std::cerr << node->lineno() << ": should not happen: unknown return type" << std::endl;
+    }
+  }
+  _pf.LEAVE();
+  _pf.RET();
 }
 void og::postfix_writer::do_allocation_node(og::allocation_node *const node, int lvl) {
   // EMPTY
@@ -322,7 +386,86 @@ void og::postfix_writer::do_position_node(og::position_node *const node, int lvl
   // EMPTY
 }
 void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
-  // EMPTY
+  /*ASSERT_SAFE_EXPRESSIONS;
+
+  auto id = node->identifiers()->at(0);
+  int offset = 0, typesize = node->type()->size();
+
+  std::cout << "ARG: " << id << ", " << typesize << std::endl;
+  if (_inFunctionBody) {
+    _offset -= typesize;
+    offset = _offset;
+  } else if (_inFunctionArgs) {
+    offset = _offset;
+    _offset += typesize;
+  } else {
+    offset = 0; // global variable
+  }
+
+  std::shared_ptr<og::symbol> symbol = new_symbol();
+  if (symbol) {
+    symbol->set_offset(offset);
+    reset_new_symbol();
+  }
+
+  if (_inFunctionBody) {
+    // if we are dealing with local variables, then no action is needed
+    // unless an initializer exists
+    if (node->expressions()) {
+      node->expressions()->accept(this, lvl);
+      if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER)) {
+        _pf.LOCAL(symbol->offset());
+        _pf.STINT();
+      } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+        _pf.LOCAL(symbol->offset());
+        _pf.STDOUBLE();
+      } else {
+        std::cerr << "cannot initialize" << std::endl;
+      }
+    }
+  } else {
+    if (!_function) {
+      if (node->expressions() == nullptr) {
+        _pf.BSS();
+        _pf.ALIGN();
+        _pf.LABEL(id);
+        _pf.SALLOC(typesize);
+      } else {
+        if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER)) {
+          _pf.DATA();
+          _pf.ALIGN();
+          _pf.LABEL(id);
+
+          if (node->is_typed(cdk::TYPE_INT)) {
+            node->expressions()->accept(this, lvl);
+          } else if (node->is_typed(cdk::TYPE_POINTER)) {
+            node->expressions()->accept(this, lvl);
+          } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+            if (node->expressions()->is_typed(cdk::TYPE_DOUBLE)) {
+              node->expressions()->accept(this, lvl);
+            } else if (node->expressions()->is_typed(cdk::TYPE_INT)) {
+              cdk::integer_node *dclini = dynamic_cast<cdk::integer_node *>(node->expressions());
+              cdk::double_node ddi(dclini->lineno(), dclini->value());
+              ddi.accept(this, lvl);
+            } else {
+              std::cerr << node->lineno() << ": '" << id << "' has bad initializer for real value\n";
+              //_errors = true;
+            }
+          }
+        } else if (node->is_typed(cdk::TYPE_STRING)) {
+          _pf.DATA();
+          _pf.ALIGN();
+          _pf.LABEL(id);
+          node->expressions()->accept(this, lvl); 
+        } else {
+          std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
+          //_errors = true;
+        }
+
+      }
+
+    }
+  }*/
 }
 void og::postfix_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
   for (size_t i = 0; i < node->size(); i++) {
