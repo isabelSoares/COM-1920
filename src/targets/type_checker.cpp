@@ -192,6 +192,8 @@ void og::type_checker::do_input_node(og::input_node *const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::type_checker::do_for_node(og::for_node *const node, int lvl) {
+  if (node->init_seq()) node->init_seq()->accept(this, lvl + 4);
+  if (node->init_exp()) node->init_exp()->accept(this, lvl + 4);
   node->condition()->accept(this, lvl + 4);
 }
 

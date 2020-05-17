@@ -4,6 +4,7 @@
 #include "targets/basic_ast_visitor.h"
 
 #include <set>
+#include <stack>
 #include <sstream>
 #include <cdk/emitters/basic_postfix_emitter.h>
 
@@ -13,13 +14,14 @@ namespace og {
   //! Traverse syntax tree and generate the corresponding assembly code.
   //!
   class postfix_writer: public basic_ast_visitor {
-    bool _inFunction, _inFunctionName, _inFunctionArgs, _inFunctionBody;
+    bool _inFunction, _inFunctionName, _inFunctionArgs, _inFunctionBody, _inForInit;
     cdk::symbol_table<og::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
     std::shared_ptr<og::symbol> _function;
 
     std::set<std::string> _functions_to_declare;
+    std::stack<int> _forIni, _forIncr, _forEnd;
 
     int _offset;
 
