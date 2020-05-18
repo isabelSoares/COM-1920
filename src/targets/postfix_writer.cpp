@@ -325,8 +325,6 @@ void og::postfix_writer::do_input_node(og::input_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::postfix_writer::do_for_node(og::for_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-
   _forIni.push(++_lbl); // after init, before body
   _forIncr.push(++_lbl);// after intruction
   _forEnd.push(++_lbl);// after for

@@ -104,7 +104,8 @@ void og::frame_size_calculator::do_return_node(og::return_node * const node, int
   // EMPTY
 }
 void og::frame_size_calculator::do_for_node(og::for_node * const node, int lvl) {
-  // EMPTY
+  if (node->init_seq()) node->init_seq()->accept(this, lvl + 4);
+  if (node->init_exp()) node->init_exp()->accept(this, lvl + 4);
 }
 void og::frame_size_calculator::do_tuple_node(og::tuple_node * const node, int lvl) {
   // EMPTY

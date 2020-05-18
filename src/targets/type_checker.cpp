@@ -192,9 +192,7 @@ void og::type_checker::do_input_node(og::input_node *const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void og::type_checker::do_for_node(og::for_node *const node, int lvl) {
-  if (node->init_seq()) node->init_seq()->accept(this, lvl + 4);
-  if (node->init_exp()) node->init_exp()->accept(this, lvl + 4);
-  node->condition()->accept(this, lvl + 4);
+  // EMPTY
 }
 
 //---------------------------------------------------------------------------
@@ -262,6 +260,7 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
   const std::string &id = node->identifiers()->at(0);
   std::shared_ptr<og::symbol> symbol = std::make_shared<og::symbol> (node->qualifier(), node->type(), id, (bool)node->expressions(), false);
   if (_symtab.insert(id, symbol)) {
+    std::cout << "New symbol inserted: " << id << std::endl;
     _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
   } else {
     throw std::string("variable '" + id + "' redeclared");
