@@ -164,11 +164,9 @@ void og::postfix_writer::do_variable_node(cdk::variable_node * const node, int l
   const std::string &id = node->name();
   std::shared_ptr<og::symbol> symbol = _symtab.find(id);
   if (symbol->global()) {
-    os() << "        ;; accessing global variable " << std::endl;
     _pf.ADDR(symbol->name());
   }
   else {
-    os() << "        ;; accessing local variable " << std::endl;
     _pf.LOCAL(symbol->offset());
   }
 }
@@ -176,9 +174,7 @@ void og::postfix_writer::do_variable_node(cdk::variable_node * const node, int l
 void og::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->lvalue()->accept(this, lvl);
-  os() << "        ;; ldint " << std::endl;
   _pf.LDINT(); // depends on type size
-  os() << "        ;; ldint close" << std::endl;
 }
 
 void og::postfix_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
@@ -215,10 +211,9 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
 
   ASSERT_SAFE_EXPRESSIONS;
 
-  if (!new_symbol()) return;
-
   if (node->block()){
-    _function = new_symbol();
+    if (!new_symbol()) _function = _symtab.find(node->identifier());
+    else _function = new_symbol();
     _functions_to_declare.erase(_function->name());
   }
   else {
@@ -228,7 +223,7 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
   reset_new_symbol();
 
   if (node->block()){
-
+    _functionHasReturn = false;
     _offset = 8; // prepare for arguments (4: remember to account for return address)
     _symtab.push(); // scope of args
     if (node->arguments()) {
@@ -240,6 +235,7 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
       }
       _inFunctionArgs = false; //FIXME really needed?
     }
+    
 
     _pf.TEXT();
     _pf.ALIGN();
@@ -250,14 +246,16 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
     frame_size_calculator lsc(_compiler, _symtab);
     node->accept(&lsc, lvl);
     _pf.ENTER(lsc.localsize()); // total stack size reserved for local variables
-
+  
     // the following flag is a slight hack: it won't work with nested functions
     _inFunctionBody = true;
     // prepare for local variables but remember the return value (first below fp)
     _offset = -_function->type()->size();
-    os() << "        ;; before body " << std::endl;
     node->block()->accept(this, lvl + 4); // block has its own scope
-    os() << "        ;; after body " << std::endl;
+    if (!_functionHasReturn) {
+      _pf.LEAVE();
+      _pf.RET();
+    }
     _inFunctionBody = false;
     _symtab.pop(); // scope of arguments
 
@@ -274,14 +272,7 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
 void og::postfix_writer::do_evaluation_node(og::evaluation_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->argument()->accept(this, lvl); // determine the value
-  if (node->argument()->is_typed(cdk::TYPE_INT)) {
-    _pf.TRASH(4); // delete the evaluated value
-  } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
-    _pf.TRASH(4); // delete the evaluated value's address
-  } else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-    exit(1);
-  }
+  _pf.TRASH(node->argument()->type()->size());
 }
 
 void og::postfix_writer::do_write_node(og::write_node * const node, int lvl) {
@@ -289,11 +280,8 @@ void og::postfix_writer::do_write_node(og::write_node * const node, int lvl) {
   node->argument()->accept(this, lvl); // determine the value to print
   if (node->argument()->is_typed(cdk::TYPE_INT)) {
      _functions_to_declare.insert("printi");
-    os() << "               ; call printi " << std::endl;
     _pf.CALL("printi");
-    os() << "               ; call trash " << std::endl;
     _pf.TRASH(4); // delete the printed value
-    os() << "               ; finish write int " << std::endl;
   } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
     _functions_to_declare.insert("prints");
     _pf.CALL("prints");
@@ -303,7 +291,7 @@ void og::postfix_writer::do_write_node(og::write_node * const node, int lvl) {
     _pf.CALL("printd");
     _pf.TRASH(8); // delete the printed double value's address
   } else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+    std::cerr << "ERROR: CANNOT HAPPEN! (write)" << std::endl;
     exit(1);
   }
 
@@ -329,7 +317,6 @@ void og::postfix_writer::do_for_node(og::for_node * const node, int lvl) {
   _forIncr.push(++_lbl);// after intruction
   _forEnd.push(++_lbl);// after for
 
-  os() << "        ;; FOR initializer" << std::endl;
   // initialize: be careful with variable declarations:
   // they are done here, but the space is occupied in the function
   _inForInit = true;// remember this for local declarations
@@ -338,28 +325,24 @@ void og::postfix_writer::do_for_node(og::for_node * const node, int lvl) {
   if (node->init_seq()) node->init_seq()->accept(this, lvl + 2);  
   if (node->init_exp()) node->init_exp()->accept(this, lvl + 2);  
 
-
-  os() << "        ;; FOR test" << std::endl;
   // prepare to test
   _pf.ALIGN();
   _pf.LABEL(mklbl(_forIni.top()));
   node->condition()->accept(this, lvl + 2);
   _pf.JZ(mklbl(_forEnd.top()));
 
-  os() << "        ;; FOR instruction" << std::endl;
   // execute instruction
   node->block()->accept(this, lvl + 2);
 
-  os() << "        ;; FOR increment" << std::endl;
   // prepare to increment
   _pf.ALIGN();
   _pf.LABEL(mklbl(_forIncr.top()));
   node->increment()->accept(this, lvl + 2);
   
-  os() << "        ;; FOR jump to test" << std::endl;
+
   _pf.JMP(mklbl(_forIni.top()));
 
-  os() << "        ;; FOR end" << std::endl;
+  
   _pf.ALIGN();
   _pf.LABEL(mklbl(_forEnd.top()));
 
@@ -416,11 +399,37 @@ void og::postfix_writer::do_continue_node(og::continue_node *const node, int lvl
     //error(node->lineno(), "'restart' outside 'for'");
 }
 void og::postfix_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  size_t argsSize = 0;
+  if (node->arguments()) {
+    for (int ax = node->arguments()->size(); ax > 0; ax--) {
+      cdk::expression_node *arg = dynamic_cast<cdk::expression_node*>(node->arguments()->node(ax - 1));
+      arg->accept(this, lvl + 2);
+      argsSize += arg->type()->size();
+    }
+  }
+  _pf.CALL(node->identifier());
+  if (argsSize != 0) {
+    _pf.TRASH(argsSize);
+  }
+
+  std::shared_ptr<og::symbol> symbol = _symtab.find(node->identifier());
+
+  //cdk::basic_type *type = symbol->type();
+  if (symbol->is_typed(cdk::TYPE_INT) || symbol->is_typed(cdk::TYPE_POINTER) || symbol->is_typed(cdk::TYPE_STRING)) {
+    _pf.LDFVAL32();
+  }
+  else if (symbol->is_typed(cdk::TYPE_DOUBLE)) {
+    _pf.LDFVAL64();
+  }
+  else {
+    // cannot happer!
+  }
 }
 void og::postfix_writer::do_return_node(og::return_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-
+  _functionHasReturn = true;
   // should not reach here without returning a value (if not void)
   if (!_function->is_typed(cdk::TYPE_VOID)) {
     node->return_value()->accept(this, lvl + 2);
@@ -456,17 +465,13 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
   auto id = node->identifiers()->at(0);
   int offset = 0, typesize = node->type()->size();
 
-  std::cout << "ARG: " << id << ", " << typesize << std::endl;
   if (_inFunctionBody) {
-    std::cout << "Function Body" << std::endl;
     _offset -= typesize;
     offset = _offset;
   } else if (_inFunctionArgs) {
-    std::cout << "Function Args" << std::endl;
     offset = _offset;
     _offset += typesize;
   } else {
-    std::cout << "Global" << std::endl;
     offset = 0; // global variable
   }
 
@@ -500,15 +505,11 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
         _pf.SALLOC(typesize);
       } else {
         if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER)) {
-          os() << "        ;; variable data " << std::endl;
           _pf.DATA();
-          os() << "        ;; variable align " << std::endl;
           _pf.ALIGN();
-          os() << "        ;; variable label " << std::endl;
           _pf.LABEL(id);
 
           if (node->is_typed(cdk::TYPE_INT)) {
-            os() << "        ;; type int " << std::endl;
             node->expressions()->accept(this, lvl);
           } else if (node->is_typed(cdk::TYPE_POINTER)) {
             node->expressions()->accept(this, lvl);
@@ -541,7 +542,6 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
 }
 void og::postfix_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
   for (size_t i = 0; i < node->size(); i++) {
-    os() << "        ;; accessing tuple " << std::endl;
     node->node(i)->accept(this, lvl);
   }
 }

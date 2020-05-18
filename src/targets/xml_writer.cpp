@@ -138,7 +138,8 @@ void og::xml_writer::do_assignment_node(cdk::assignment_node * const node, int l
 //---------------------------------------------------------------------------
 
 void og::xml_writer::do_function_declaration_node(og::function_declaration_node * const node, int lvl) {
-  // TODO: type
+  ASSERT_SAFE_EXPRESSIONS;
+
   os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "' qualifier='"
        << qualifier_name(node->qualifier()) << "' type='" << to_string(node->type()) << "'>" << std::endl;
 
@@ -271,7 +272,8 @@ void og::xml_writer::do_continue_node(og::continue_node *const node, int lvl) {
 
 void og::xml_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "'>" << std::endl;
+  os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier()
+    << "' type='" << to_string(node->type()) << "'>" << std::endl;
 
   openTag("arguments", lvl + 2);
   if (node->arguments()) node->arguments()->accept(this, lvl + 4);

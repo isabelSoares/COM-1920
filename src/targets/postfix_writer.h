@@ -14,7 +14,7 @@ namespace og {
   //! Traverse syntax tree and generate the corresponding assembly code.
   //!
   class postfix_writer: public basic_ast_visitor {
-    bool _inFunction, _inFunctionName, _inFunctionArgs, _inFunctionBody, _inForInit;
+    bool _inFunction, _inFunctionName, _inFunctionArgs, _inFunctionBody, _inForInit, _functionHasReturn;
     cdk::symbol_table<og::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;

@@ -217,7 +217,20 @@ void og::type_checker::do_continue_node(og::continue_node *const node, int lvl) 
   // EMPTY
 }
 void og::type_checker::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  const std::string &id = node->identifier();
+  std::shared_ptr<og::symbol> symbol = _symtab.find(id);
+
+  if (symbol == nullptr) throw std::string("symbol '" + id + "' is undeclared.");
+
+  if (!symbol->isFunction()) throw std::string("symbol '" + id + "' is not a function.");
+
+  node->type(symbol->type());
+
+  //DAVID: FIXME: should also validate args against symbol
+  if (node->arguments()) {
+    node->arguments()->accept(this, lvl + 4);
+  }
 }
 void og::type_checker::do_return_node(og::return_node *const node, int lvl) {
   // EMPTY
@@ -260,7 +273,6 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
   const std::string &id = node->identifiers()->at(0);
   std::shared_ptr<og::symbol> symbol = std::make_shared<og::symbol> (node->qualifier(), node->type(), id, (bool)node->expressions(), false);
   if (_symtab.insert(id, symbol)) {
-    std::cout << "New symbol inserted: " << id << std::endl;
     _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
   } else {
     throw std::string("variable '" + id + "' redeclared");

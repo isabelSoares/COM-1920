@@ -9,10 +9,10 @@ namespace og {
 
   class function_invocation_node: public cdk::expression_node {
     std::string _identifier;
-    cdk::expression_node *_arguments;
+    og::tuple_node *_arguments;
 
   public:
-    inline function_invocation_node(int lineno, std::string &identifier, cdk::expression_node *arguments = nullptr) :
+    inline function_invocation_node(int lineno, std::string &identifier, og::tuple_node *arguments = nullptr) :
         cdk::expression_node(lineno), _identifier(identifier), _arguments(arguments) {
     }
 
@@ -20,7 +20,7 @@ namespace og {
     inline std::string &identifier() {
       return _identifier;
     }
-    inline cdk::expression_node *arguments() {
+    inline og::tuple_node *arguments() {
       return _arguments;
     }
 
