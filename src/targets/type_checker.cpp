@@ -1,6 +1,8 @@
 #include <string>
+#include <vector>
 #include "targets/type_checker.h"
 #include "ast/all.h"  // automatically generated
+#include <cdk/types/basic_type.h>
 #include <cdk/types/primitive_type.h>
 
 #define ASSERT_UNSPEC { if (node->type() != nullptr && !node->is_typed(cdk::TYPE_UNSPEC)) return; }
@@ -20,7 +22,8 @@ void og::type_checker::do_data_node(cdk::data_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
 }
 void og::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
   // EMPTY
@@ -63,13 +66,18 @@ void og::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
 void og::type_checker::processBinaryExpression(cdk::binary_operation_node *const node, int lvl) {
   ASSERT_UNSPEC;
   node->left()->accept(this, lvl + 2);
-  if (!node->left()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of binary expression");
-
   node->right()->accept(this, lvl + 2);
-  if (!node->right()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of binary expression");
 
-  // in Simple, expressions are always int
-  node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+  if (node->left()->is_typed(cdk::TYPE_INT) && node->right()->is_typed(cdk::TYPE_INT)) {
+    node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+  } else if ((node->left()->is_typed(cdk::TYPE_DOUBLE) || node->right()->is_typed(cdk::TYPE_DOUBLE)) && 
+      (node->left()->is_typed(cdk::TYPE_INT) || node->right()->is_typed(cdk::TYPE_INT))) {
+    node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
+  } else if (node->left()->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_DOUBLE)) {
+    node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
+  } else {
+   throw std::string("wrong type in left argument of binary expression");
+  }
 }
 
 void og::type_checker::do_add_node(cdk::add_node *const node, int lvl) {
@@ -255,6 +263,7 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
       if (!node->expressions()->is_typed(cdk::TYPE_INT)) throw std::string(
           "wrong type for initializer (integer expected).");
     } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+      std::cout << "Here with size: " << node->type()->size() << std::endl;
       if (!node->expressions()->is_typed(cdk::TYPE_INT)
           && !node->expressions()->is_typed(cdk::TYPE_DOUBLE)) throw std::string(
           "wrong type for initializer (integer or double expected).");
@@ -266,7 +275,8 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
       if (!node->expressions()->is_typed(cdk::TYPE_POINTER)) throw std::string(
           "wrong type for initializer (pointer expected).");
     } else {
-      throw std::string("unknown type for initializer.");
+      node->type(node->expressions()->type());
+      //throw std::string("unknown type for initializer.");
     }
   }
 
@@ -284,6 +294,18 @@ void og::type_checker::do_tuple_node(og::tuple_node *const node, int lvl) {
   if (node->size() == 1) {
     node->node(0)->accept(this, lvl);
     node->type(node->node(0)->type());
+  } else if (node->size() > 1) {
+
+    std::vector<std::shared_ptr<cdk::basic_type>> vector;
+    for (size_t ix = 0; ix < node->size(); ix++) {
+      cdk::expression_node *exp = node->node(ix);
+      if (exp == nullptr) break;
+      exp->accept(this, 0);
+
+      vector.push_back(exp->type());
+    }
+
+    node->type(cdk::make_structured_type(vector));
   }
 }
 void og::type_checker::do_identity_node(og::identity_node *const node, int lvl) {
@@ -293,5 +315,6 @@ void og::type_checker::do_nullptr_node(og::nullptr_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_sizeof_node(og::sizeof_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
 }

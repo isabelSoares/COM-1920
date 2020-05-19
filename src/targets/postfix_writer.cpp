@@ -1,6 +1,7 @@
 #include <string>
 #include <sstream>
 #include "targets/type_checker.h"
+#include "targets/sizeof_calculator.h"
 #include "targets/frame_size_calculator.h"
 #include "targets/postfix_writer.h"
 #include "ast/all.h"  // all.h is automatically generated
@@ -486,7 +487,7 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
     // unless an initializer exists
     if (node->expressions()) {
       node->expressions()->accept(this, lvl);
-      if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER)) {
+      if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER) || node->is_typed(cdk::TYPE_STRUCT)) {
         _pf.LOCAL(symbol->offset());
         _pf.STINT();
       } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
@@ -553,5 +554,7 @@ void og::postfix_writer::do_nullptr_node(og::nullptr_node *const node, int lvl) 
   // EMPTY
 }
 void og::postfix_writer::do_sizeof_node(og::sizeof_node *const node, int lvl) {
-  // EMPTY
+  sizeof_calculator lsc(_compiler, _symtab);
+  node->expression()->accept(&lsc, lvl);
+  _pf.INT(lsc.localsize());
 }

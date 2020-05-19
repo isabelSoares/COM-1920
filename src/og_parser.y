@@ -151,10 +151,10 @@ vars           :          var                                    { $$ = new cdk:
                ;
 
 type           : tINTTAG                                         { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::primitive_type(4, cdk::typename_type::TYPE_INT));    }
-               | tREALTAG                                        { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::primitive_type(4, cdk::typename_type::TYPE_DOUBLE)); }
+               | tREALTAG                                        { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::primitive_type(8, cdk::typename_type::TYPE_DOUBLE)); }
                | tSTRINGTAG                                      { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::primitive_type(4, cdk::typename_type::TYPE_STRING)); }
-               | tPOINTERTAG '<' tAUTOTAG '>'                    { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::reference_type(sizeof(char*), * new std::shared_ptr<cdk::basic_type>(new cdk::primitive_type(4, cdk::typename_type::TYPE_STRUCT)))); }
-               | tPOINTERTAG '<' type     '>'                    { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::reference_type(sizeof(char*), *$3)); }
+               | tPOINTERTAG '<' tAUTOTAG '>'                    { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::reference_type(4, * new std::shared_ptr<cdk::basic_type>(new cdk::primitive_type(4, cdk::typename_type::TYPE_STRUCT)))); }
+               | tPOINTERTAG '<' type     '>'                    { $$ = new std::shared_ptr<cdk::basic_type>(new cdk::reference_type(4, *$3)); }
                ;
 
 block          : '{'                      '}'                    { $$ = new og::block_node(LINE, nullptr, nullptr); }
