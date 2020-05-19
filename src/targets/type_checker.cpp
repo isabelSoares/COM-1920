@@ -263,7 +263,6 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
       if (!node->expressions()->is_typed(cdk::TYPE_INT)) throw std::string(
           "wrong type for initializer (integer expected).");
     } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
-      std::cout << "Here with size: " << node->type()->size() << std::endl;
       if (!node->expressions()->is_typed(cdk::TYPE_INT)
           && !node->expressions()->is_typed(cdk::TYPE_DOUBLE)) throw std::string(
           "wrong type for initializer (integer or double expected).");

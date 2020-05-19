@@ -13,6 +13,7 @@ namespace og {
     std::string _name;
     bool _initialized;
     bool _function;
+    std::vector<std::shared_ptr<cdk::basic_type>> _arguments;
     long _value = 0; // hack!
   
     int _offset = 0; // 0 (zero) means global variable/function
@@ -46,6 +47,12 @@ namespace og {
     }
     bool isFunction() const {
       return _function;
+    }
+    std::vector<std::shared_ptr<cdk::basic_type>> arguments() const {
+      return _arguments;
+    }
+    std::vector<std::shared_ptr<cdk::basic_type>> arguments(std::vector<std::shared_ptr<cdk::basic_type>> arg) {
+      return _arguments = arg;
     }
     bool isVariable() const {
       return !_function;

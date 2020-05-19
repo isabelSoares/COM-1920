@@ -142,18 +142,18 @@ void og::xml_writer::do_function_declaration_node(og::function_declaration_node 
 
   os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "' qualifier='"
        << qualifier_name(node->qualifier()) << "' type='" << to_string(node->type()) << "'>" << std::endl;
+  _symtab.push();
 
   openTag("arguments", lvl + 2);
   if (node->arguments()) {
-    _symtab.push();
     node->arguments()->accept(this, lvl + 4);
-    _symtab.pop();
   }
   closeTag("arguments", lvl + 2);
 
   if (node->block())
     node->block()->accept(this, lvl + 2);
   
+  _symtab.pop();
   closeTag(node, lvl);
 }
 

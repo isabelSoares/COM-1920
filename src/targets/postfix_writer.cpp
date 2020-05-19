@@ -92,9 +92,27 @@ void og::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 
 void og::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.ADD();
+
+  node->left()->accept(this, lvl + 2);
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  node->right()->accept(this, lvl + 2);
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  if (node->is_typed(cdk::TYPE_DOUBLE))
+    _pf.DADD();
+  else
+    _pf.ADD();
 }
 void og::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
@@ -175,7 +193,13 @@ void og::postfix_writer::do_variable_node(cdk::variable_node * const node, int l
 void og::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->lvalue()->accept(this, lvl);
-  _pf.LDINT(); // depends on type size
+  if (node->is_typed(cdk::TYPE_DOUBLE)) {
+    _pf.LDDOUBLE();
+  }
+  else {
+    // integers, pointers, and strings
+    _pf.LDINT();
+  }
 }
 
 void og::postfix_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
@@ -229,15 +253,18 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
     _symtab.push(); // scope of args
     if (node->arguments()) {
       _inFunctionArgs = true; //FIXME really needed?
+      std::vector<std::shared_ptr<cdk::basic_type>> args;
       for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
-        cdk::basic_node *arg = node->arguments()->node(ix);
+        // FIXME bad cast?
+        og::var_declaration_node *arg = (og::var_declaration_node*)node->arguments()->node(ix);
         if (arg == nullptr) break; // this means an empty sequence of arguments
         arg->accept(this, 0); // the function symbol is at the top of the stack
+        args.push_back(arg->type());
       }
+      _function->arguments(args);
       _inFunctionArgs = false; //FIXME really needed?
     }
     
-
     _pf.TEXT();
     _pf.ALIGN();
     if (node->qualifier() == tPUBLIC) _pf.GLOBAL(_function->name(), _pf.FUNC());
@@ -401,12 +428,18 @@ void og::postfix_writer::do_continue_node(og::continue_node *const node, int lvl
 }
 void og::postfix_writer::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+  std::shared_ptr<og::symbol> symbol = _symtab.find(node->identifier());
+  std::vector<std::shared_ptr<cdk::basic_type>> args = symbol->arguments();
   
   size_t argsSize = 0;
   if (node->arguments()) {
     for (int ax = node->arguments()->size(); ax > 0; ax--) {
       cdk::expression_node *arg = dynamic_cast<cdk::expression_node*>(node->arguments()->node(ax - 1));
       arg->accept(this, lvl + 2);
+      // FIXME no need for checking size
+      if (args.size() == node->arguments()->size() && arg->is_typed(cdk::TYPE_INT) && args.at(ax - 1)->name() == cdk::TYPE_DOUBLE)
+        _pf.I2D();
+
       argsSize += arg->type()->size();
     }
   }
@@ -415,7 +448,6 @@ void og::postfix_writer::do_function_invocation_node(og::function_invocation_nod
     _pf.TRASH(argsSize);
   }
 
-  std::shared_ptr<og::symbol> symbol = _symtab.find(node->identifier());
 
   //cdk::basic_type *type = symbol->type();
   if (symbol->is_typed(cdk::TYPE_INT) || symbol->is_typed(cdk::TYPE_POINTER) || symbol->is_typed(cdk::TYPE_STRING)) {
@@ -542,6 +574,7 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
   }
 }
 void og::postfix_writer::do_tuple_node(og::tuple_node *const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
   for (size_t i = 0; i < node->size(); i++) {
     node->node(i)->accept(this, lvl);
   }
