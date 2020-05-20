@@ -39,7 +39,16 @@ void og::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
   _pf.LABEL(mklbl(lbl1));
 }
 void og::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  int lbl1;
+  node->left()->accept(this, lvl + 2);
+  _pf.DUP32();
+  _pf.JNZ(mklbl(lbl1 = ++_lbl));
+  node->right()->accept(this, lvl + 2);
+  _pf.OR();
+  _pf.ALIGN();
+  _pf.LABEL(mklbl(lbl1));
 }
 
 //---------------------------------------------------------------------------
@@ -93,7 +102,7 @@ void og::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 void og::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-  node->left()->accept(this, lvl + 2);
+  node->left()->accept(this, lvl);
   if (node->is_typed(cdk::TYPE_DOUBLE) && node->left()->is_typed(cdk::TYPE_INT)) {
     _pf.I2D();
   } else if (node->is_typed(cdk::TYPE_POINTER) && node->left()->is_typed(cdk::TYPE_INT)) {
@@ -101,7 +110,7 @@ void og::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
     _pf.SHTL();
   }
 
-  node->right()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl);
   if (node->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_INT)) {
     _pf.I2D();
   } else if (node->is_typed(cdk::TYPE_POINTER) && node->right()->is_typed(cdk::TYPE_INT)) {
@@ -116,21 +125,75 @@ void og::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
 }
 void og::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->left()->accept(this, lvl);
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
   node->right()->accept(this, lvl);
-  _pf.SUB();
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  if (node->is_typed(cdk::TYPE_DOUBLE))
+    _pf.DSUB();
+  else
+    _pf.SUB();
 }
 void og::postfix_writer::do_mul_node(cdk::mul_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->left()->accept(this, lvl);
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
   node->right()->accept(this, lvl);
-  _pf.MUL();
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  if (node->is_typed(cdk::TYPE_DOUBLE))
+    _pf.DMUL();
+  else
+    _pf.MUL();
 }
 void og::postfix_writer::do_div_node(cdk::div_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->left()->accept(this, lvl);
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->left()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
   node->right()->accept(this, lvl);
-  _pf.DIV();
+  if (node->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.I2D();
+  } else if (node->is_typed(cdk::TYPE_POINTER) && node->right()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  if (node->is_typed(cdk::TYPE_DOUBLE))
+    _pf.DDIV();
+  else
+    _pf.DIV();
 }
 void og::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
@@ -205,7 +268,14 @@ void og::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) 
 void og::postfix_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->rvalue()->accept(this, lvl); // determine the new value
-  _pf.DUP32();
+  if (node->is_typed(cdk::TYPE_DOUBLE)) {
+    if (node->rvalue()->is_typed(cdk::TYPE_INT)) _pf.I2D();
+    _pf.DUP64();
+  } else {
+    _pf.DUP32();
+  }
+
+
   if (new_symbol() == nullptr) {
     node->lvalue()->accept(this, lvl); // where to store the value
   } else {
@@ -217,7 +287,9 @@ void og::postfix_writer::do_assignment_node(cdk::assignment_node * const node, i
     _pf.TEXT(); // return to the TEXT segment
     node->lvalue()->accept(this, lvl);  //DAVID: bah!
   }
-  _pf.STINT(); // store the value at address
+
+  if (node->is_typed(cdk::TYPE_DOUBLE)) _pf.STDOUBLE();
+  else _pf.STINT();
 }
 
 //---------------------------------------------------------------------------
@@ -481,10 +553,22 @@ void og::postfix_writer::do_return_node(og::return_node *const node, int lvl) {
   _pf.RET();
 }
 void og::postfix_writer::do_allocation_node(og::allocation_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  node->argument()->accept(this, lvl);
+  _pf.INT(3);
+  _pf.SHTL();
+  _pf.ALLOC(); // allocate
+  _pf.SP();// put base pointer in stack
 }
 void og::postfix_writer::do_index_node(og::index_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  node->base()->accept(this, lvl);
+  node->index()->accept(this, lvl);
+  _pf.INT(3);
+  _pf.SHTL();
+  _pf.ADD(); // add pointer and index
 }
 void og::postfix_writer::do_index_tuple_node(og::index_tuple_node *const node, int lvl) {
   // EMPTY

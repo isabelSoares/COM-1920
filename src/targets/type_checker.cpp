@@ -150,13 +150,54 @@ void og::type_checker::do_assignment_node(cdk::assignment_node *const node, int 
     node->lvalue()->accept(this, lvl);  //DAVID: bah!
   }
 
-  if (!node->lvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of assignment expression");
+  node->rvalue()->accept(this, lvl);
 
-  node->rvalue()->accept(this, lvl + 2);
-  if (!node->rvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of assignment expression");
+  if (node->lvalue()->is_typed(cdk::TYPE_INT)) {
+    if (node->rvalue()->is_typed(cdk::TYPE_INT)) {
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+    } else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+      node->rvalue()->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+    } else
+      throw std::string("wrong assignment to integer");
+  } else if (node->lvalue()->is_typed(cdk::TYPE_POINTER)) {
 
-  // in Simple, expressions are always int
-  node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+//TODO: check pointer level
+
+    if (node->rvalue()->is_typed(cdk::TYPE_POINTER)) {
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_POINTER));
+    } else if (node->rvalue()->is_typed(cdk::TYPE_INT)) {
+      //TODO: check that the integer is a literal and that it is zero
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_POINTER));
+    } else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_ERROR));
+      node->rvalue()->type(cdk::make_primitive_type(4, cdk::TYPE_ERROR));
+    } else
+      throw std::string("wrong assignment to pointer");
+
+  } else if (node->lvalue()->is_typed(cdk::TYPE_DOUBLE)) {
+
+    if (node->rvalue()->is_typed(cdk::TYPE_DOUBLE) || node->rvalue()->is_typed(cdk::TYPE_INT)) {
+      node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
+    } else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
+      node->rvalue()->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
+    } else
+      throw std::string("wrong assignment to real");
+
+  } else if (node->lvalue()->is_typed(cdk::TYPE_STRING)) {
+
+    if (node->rvalue()->is_typed(cdk::TYPE_STRING)) {
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_STRING));
+    } else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::make_primitive_type(4, cdk::TYPE_STRING));
+      node->rvalue()->type(cdk::make_primitive_type(4, cdk::TYPE_STRING));
+    } else
+      throw std::string("wrong assignment to string");
+
+  } else {
+    throw std::string("wrong types in assignment");
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -244,10 +285,23 @@ void og::type_checker::do_return_node(og::return_node *const node, int lvl) {
   // EMPTY
 }
 void og::type_checker::do_allocation_node(og::allocation_node *const node, int lvl) {  
-  // EMPTY
+  ASSERT_UNSPEC;
+
+  node->argument()->accept(this, lvl + 2);
+  if (!node->argument()->is_typed(cdk::TYPE_INT)) throw std::string("integer expression expected in allocation expression");
+
+  //FIXME: check the following two lines
+  node->type(cdk::make_reference_type(4, cdk::make_primitive_type(8, cdk::TYPE_DOUBLE)));
 }
 void og::type_checker::do_index_node(og::index_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+
+  node->base()->accept(this, lvl + 2);
+  if (!node->base()->is_typed(cdk::TYPE_POINTER)) throw std::string("pointer expression expected in index left-value");
+
+  node->index()->accept(this, lvl + 2);
+  if (!node->index()->is_typed(cdk::TYPE_INT)) throw std::string("integer expression expected in left-value index");
+  node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
 }
 void og::type_checker::do_index_tuple_node(og::index_tuple_node *const node, int lvl) {
   // EMPTY

@@ -292,6 +292,8 @@ void og::xml_writer::do_return_node(og::return_node *const node, int lvl) {
 }
 
 void og::xml_writer::do_allocation_node(og::allocation_node *const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+
   openTag(node, lvl);
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);

@@ -56,7 +56,7 @@
 <X_STRING>\\[aA]                        ;
 <X_STRING>"\\0"[aA]                     ;
 <X_STRING>"\\0"                         yy_pop_state(); yy_push_state(X_STRING_NO_MORE); yylval.s = new std::string("");
-<X_STRING>"\\n"                         ;
+<X_STRING>"\\n"                         *yylval.s += '\n';
 <X_STRING>"\\t"                         ;
 <X_STRING>"\\r"                         *yylval.s += '\r';
 <X_STRING>\\[A-Fa-f0-9]{1,2}            *yylval.s += (char) std::strtol(yytext + 1, nullptr, 16);
