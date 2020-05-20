@@ -307,7 +307,16 @@ void og::type_checker::do_index_node(og::index_node *const node, int lvl) {
   node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
 }
 void og::type_checker::do_index_tuple_node(og::index_tuple_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+
+  const std::string &id = node->identifier();
+  std::shared_ptr<og::symbol> symbol = _symtab.find(id);
+
+  if (!symbol->is_typed(cdk::TYPE_STRUCT))
+    std::cerr << "Index of tuple, but not a tuple" << std::endl;
+
+  std::shared_ptr<cdk::structured_type> structured_type = cdk::structured_type_cast(symbol->type());
+  node->type(structured_type->component(node->index() - 1));
 }
 void og::type_checker::do_position_node(og::position_node *const node, int lvl) {
   ASSERT_UNSPEC;
