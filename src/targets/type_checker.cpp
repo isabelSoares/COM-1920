@@ -73,6 +73,9 @@ void og::type_checker::processBinaryExpression(cdk::binary_operation_node *const
   } else if ((node->left()->is_typed(cdk::TYPE_DOUBLE) || node->right()->is_typed(cdk::TYPE_DOUBLE)) && 
       (node->left()->is_typed(cdk::TYPE_INT) || node->right()->is_typed(cdk::TYPE_INT))) {
     node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
+  } else if ((node->left()->is_typed(cdk::TYPE_POINTER) || node->right()->is_typed(cdk::TYPE_POINTER)) && 
+      (node->left()->is_typed(cdk::TYPE_INT) || node->right()->is_typed(cdk::TYPE_INT))) {
+    node->type(cdk::make_primitive_type(4, cdk::TYPE_POINTER));
   } else if (node->left()->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_DOUBLE)) {
     node->type(cdk::make_primitive_type(8, cdk::TYPE_DOUBLE));
   } else {
@@ -307,7 +310,15 @@ void og::type_checker::do_index_tuple_node(og::index_tuple_node *const node, int
   // EMPTY
 }
 void og::type_checker::do_position_node(og::position_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+
+  node->lvalue()->accept(this, lvl + 2);
+
+  if (node->lvalue()->is_typed(cdk::TYPE_DOUBLE)) {
+    node->type(cdk::make_reference_type(4, node->lvalue()->type()));
+  } else {
+    throw std::string("wrong type in unary logical expression");
+  }
 }
 void og::type_checker::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
   if (node->expressions() != nullptr) {
@@ -365,7 +376,8 @@ void og::type_checker::do_identity_node(og::identity_node *const node, int lvl) 
   processUnaryExpression(node, lvl);
 }
 void og::type_checker::do_nullptr_node(og::nullptr_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::make_reference_type(4, nullptr));
 }
 void og::type_checker::do_sizeof_node(og::sizeof_node *const node, int lvl) {
   ASSERT_UNSPEC;

@@ -1,4 +1,5 @@
 #include <string>
+#include "targets/type_checker.h"
 #include "targets/frame_size_calculator.h"
 #include "targets/symbol.h"
 #include "ast/all.h"
@@ -149,10 +150,12 @@ void og::frame_size_calculator::do_if_else_node(og::if_else_node * const node, i
 }
 
 void og::frame_size_calculator::do_var_declaration_node(og::var_declaration_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
   _localsize += node->type()->size();
 }
 
 void og::frame_size_calculator::do_function_declaration_node(og::function_declaration_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
   _localsize += node->type()->size(); // save space for the function's return type
   node->block()->accept(this, lvl + 2);
 }

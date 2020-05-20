@@ -574,7 +574,8 @@ void og::postfix_writer::do_index_tuple_node(og::index_tuple_node *const node, i
   // EMPTY
 }
 void og::postfix_writer::do_position_node(og::position_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  node->lvalue()->accept(this, lvl + 2);
 }
 void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
@@ -603,6 +604,9 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
     // unless an initializer exists
     if (node->expressions()) {
       node->expressions()->accept(this, lvl);
+      if (node->is_typed(cdk::TYPE_DOUBLE) && node->expressions()->is_typed(cdk::TYPE_INT))
+        _pf.I2D();
+
       if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER) || node->is_typed(cdk::TYPE_STRUCT)) {
         _pf.LOCAL(symbol->offset());
         _pf.STINT();
@@ -668,7 +672,12 @@ void og::postfix_writer::do_identity_node(og::identity_node *const node, int lvl
   node->argument()->accept(this, lvl);
 }
 void og::postfix_writer::do_nullptr_node(og::nullptr_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  if (_inFunctionBody) {
+    _pf.INT(0);
+  } else {
+    _pf.SINT(0);
+  }
 }
 void og::postfix_writer::do_sizeof_node(og::sizeof_node *const node, int lvl) {
   sizeof_calculator lsc(_compiler, _symtab);
