@@ -580,7 +580,6 @@ void og::postfix_writer::do_position_node(og::position_node *const node, int lvl
 void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-  auto id = node->identifiers()->at(0);
   int offset = 0, typesize = node->type()->size();
 
   if (_inFunctionBody) {
@@ -603,36 +602,59 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
     // if we are dealing with local variables, then no action is needed
     // unless an initializer exists
     if (node->expressions()) {
-      node->expressions()->accept(this, lvl);
-      if (node->is_typed(cdk::TYPE_DOUBLE) && node->expressions()->is_typed(cdk::TYPE_INT))
-        _pf.I2D();
+      if (symbol) {
+        node->expressions()->accept(this, lvl);
+        if (node->is_typed(cdk::TYPE_DOUBLE) && node->expressions()->is_typed(cdk::TYPE_INT))
+          _pf.I2D();
 
-      if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER) || node->is_typed(cdk::TYPE_STRUCT)) {
-        _pf.LOCAL(symbol->offset());
-        _pf.STINT();
-      } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
-        _pf.LOCAL(symbol->offset());
-        _pf.STDOUBLE();
+        if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER) || node->is_typed(cdk::TYPE_STRUCT)) {
+          _pf.LOCAL(symbol->offset());
+          _pf.STINT();
+        } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+          _pf.LOCAL(symbol->offset());
+          _pf.STDOUBLE();
+        } else {
+          std::cerr << "cannot initialize" << std::endl;
+        }
       } else {
-        std::cerr << "cannot initialize" << std::endl;
+        auto struct_type = cdk::structured_type_cast(node->expressions()->type());
+        auto tuple_node = (og::tuple_node *) node->expressions();
+        for (size_t actual = struct_type->length(); actual > 0; actual--) {
+          tuple_node->node(actual - 1)->accept(this, lvl);
+
+          auto symbol = _symtab.find(node->identifiers()->at(actual - 1));
+          symbol->set_offset(offset);
+
+          if (struct_type->component(actual - 1)->name() == cdk::TYPE_INT || struct_type->component(actual - 1)->name() == cdk::TYPE_STRING || 
+              struct_type->component(actual - 1)->name() == cdk::TYPE_POINTER || struct_type->component(actual - 1)->name() == cdk::TYPE_STRUCT) {
+            _pf.LOCAL(symbol->offset());
+            _pf.STINT();
+          } else if (struct_type->component(actual - 1)->name() == cdk::TYPE_DOUBLE) {
+            _pf.LOCAL(symbol->offset());
+            _pf.STDOUBLE();
+          } else {
+            std::cerr << "cannot initialize" << std::endl;
+          }
+
+          offset += struct_type->component(actual - 1)->size();
+        }
       }
     }
   } else {
     if (!_function) {
+      auto id = node->identifiers()->at(0);
       if (node->expressions() == nullptr) {
         _pf.BSS();
         _pf.ALIGN();
         _pf.LABEL(id);
         _pf.SALLOC(typesize);
       } else {
-        if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER)) {
+        if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER) || node->is_typed(cdk::TYPE_STRING)) {
           _pf.DATA();
           _pf.ALIGN();
           _pf.LABEL(id);
 
-          if (node->is_typed(cdk::TYPE_INT)) {
-            node->expressions()->accept(this, lvl);
-          } else if (node->is_typed(cdk::TYPE_POINTER)) {
+          if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_STRING) || node->is_typed(cdk::TYPE_POINTER)) {
             node->expressions()->accept(this, lvl);
           } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
             if (node->expressions()->is_typed(cdk::TYPE_DOUBLE)) {
@@ -646,11 +668,17 @@ void og::postfix_writer::do_var_declaration_node(og::var_declaration_node *const
               //_errors = true;
             }
           }
-        } else if (node->is_typed(cdk::TYPE_STRING)) {
+        } else if (node->is_typed(cdk::TYPE_STRUCT)) {
           _pf.DATA();
           _pf.ALIGN();
-          _pf.LABEL(id);
-          node->expressions()->accept(this, lvl); 
+
+          auto struct_type = cdk::structured_type_cast(node->expressions()->type());
+          auto tuple_node = (og::tuple_node *) node->expressions();
+          for (size_t actual = 0; actual < struct_type->length(); actual++) {
+            _pf.LABEL(node->identifiers()->at(actual));
+            tuple_node->node(actual)->accept(this, lvl);
+          }
+        
         } else {
           std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
           //_errors = true;

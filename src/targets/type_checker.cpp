@@ -344,12 +344,26 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
     }
   }
 
-  const std::string &id = node->identifiers()->at(0);
-  std::shared_ptr<og::symbol> symbol = std::make_shared<og::symbol> (node->qualifier(), node->type(), id, (bool)node->expressions(), false);
-  if (_symtab.insert(id, symbol)) {
-    _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
-  } else {
-    throw std::string("variable '" + id + "' redeclared");
+  if (node->identifiers()->size() == 1) {
+    // Simple case
+    const std::string &id = node->identifiers()->at(0);
+    std::shared_ptr<og::symbol> symbol = std::make_shared<og::symbol> (node->qualifier(), node->type(), id, (bool)node->expressions(), false);
+    if (_symtab.insert(id, symbol)) {
+      _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
+    } else {
+      throw std::string("variable '" + id + "' redeclared");
+    }
+  } else if (node->identifiers()->size() > 1) {
+    // Case: int a, b = 1, 2
+    const std::shared_ptr<cdk::structured_type> type = cdk::structured_type_cast(node->expressions()->type());
+    for (size_t actual = 0; actual < node->identifiers()->size(); actual++) {
+      const std::string &id = node->identifiers()->at(actual);
+      std::shared_ptr<og::symbol> symbol = std::make_shared<og::symbol> (node->qualifier(), type->component(actual), id, (bool)node->expressions(), false);
+
+      if (!_symtab.insert(id, symbol)) {
+        std::cerr << "variable '" << id << "' redeclared" << std::endl;
+      }
+    }
   }
 }
 void og::type_checker::do_tuple_node(og::tuple_node *const node, int lvl) {
