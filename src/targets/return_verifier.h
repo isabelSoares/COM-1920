@@ -14,26 +14,18 @@ namespace og {
 
   class return_verifier: public basic_ast_visitor {
     cdk::symbol_table<og::symbol> &_symtab;
-
-    bool _return_everywhere;
+  
     std::shared_ptr<cdk::basic_type> _return_type;
 
   public:
     return_verifier(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<og::symbol> &symtab) :
-        basic_ast_visitor(compiler), _symtab(symtab), _return_everywhere(false) {
+        basic_ast_visitor(compiler), _symtab(symtab) {
     }
 
   public:
     ~return_verifier();
 
   public:
-    bool return_everywhere() const {
-      return _return_everywhere;
-    }
-    bool return_everywhere(bool value) {
-      return _return_everywhere = value;
-    }
-
     std::shared_ptr<cdk::basic_type> return_type() const {
       return _return_type;
     }

@@ -109,7 +109,33 @@ void og::return_verifier::do_return_node(og::return_node * const node, int lvl) 
     node->return_value()->accept(this, lvl);
 
     if (!_return_type) _return_type = node->return_value()->type();
-    else if (_return_type != node->return_value()->type()) std::cerr << "ERROR: different return types in same function" << std::endl;
+    else if (_return_type != node->return_value()->type()) {
+      if (_return_type->name() == cdk::TYPE_INT && node->return_value()->is_typed(cdk::TYPE_DOUBLE)) _return_type = node->return_value()->type();
+      else if (_return_type->name() == cdk::TYPE_DOUBLE && node->return_value()->is_typed(cdk::TYPE_INT)) { /* empty */}
+      else if (_return_type->name() == cdk::TYPE_STRUCT && node->return_value()->is_typed(cdk::TYPE_STRUCT)) {
+        auto struct_type_stored = cdk::structured_type_cast(_return_type);
+        auto struct_type_node = cdk::structured_type_cast(node->return_value()->type());
+        if (struct_type_stored->length() != struct_type_node->length()) {
+          std::cerr << "ERROR: different number of components of return types in function" << std::endl;
+        } else {
+
+          std::vector<std::shared_ptr<cdk::basic_type>> vector;
+          for (size_t actual = 0; actual < struct_type_stored->length(); actual++) {
+            auto component_stored = struct_type_stored->component(actual);
+            auto component_node = struct_type_node->component(actual);
+
+            if (component_stored->name() == cdk::TYPE_INT && component_node->name() == cdk::TYPE_DOUBLE) vector.push_back(component_node);
+            else if (component_stored->name() == cdk::TYPE_DOUBLE && component_node->name() == cdk::TYPE_INT) vector.push_back(component_stored);
+            else if (component_stored == component_node) vector.push_back(component_stored);
+            else std::cerr << "ERROR: uncompatible components of return types in function" << std::endl;
+          }
+          _return_type = cdk::make_structured_type(vector);
+        }
+      } else {
+        std::cerr << "ERROR: different return types in same function" << std::endl;
+      }
+      
+    }
   } else {
     if (!_return_type) _return_type = cdk::make_primitive_type(0, cdk::TYPE_VOID);
     else if (_return_type->name() == cdk::TYPE_VOID) std::cerr << "ERROR: different return types in same function" << std::endl;

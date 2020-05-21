@@ -424,27 +424,38 @@ void og::postfix_writer::do_for_node(og::for_node * const node, int lvl) {
 
 void og::postfix_writer::do_if_node(og::if_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+  bool prev = _functionHasReturn;
 
   int lbl1;
   node->condition()->accept(this, lvl);
   _pf.JZ(mklbl(lbl1 = ++_lbl));
   node->block()->accept(this, lvl + 2);
   _pf.LABEL(mklbl(lbl1));
+
+  _functionHasReturn = prev;
 }
 
 //---------------------------------------------------------------------------
 
 void og::postfix_writer::do_if_else_node(og::if_else_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+  bool prev = _functionHasReturn;
+  _functionHasReturn = false;
 
   int lbl1, lbl2;
   node->condition()->accept(this, lvl);
   _pf.JZ(mklbl(lbl1 = ++_lbl));
   node->thenblock()->accept(this, lvl + 2);
+  bool ifHasReturn = _functionHasReturn;
+
+  _functionHasReturn = false;
   _pf.JMP(mklbl(lbl2 = ++_lbl));
   _pf.LABEL(mklbl(lbl1));
   node->elseblock()->accept(this, lvl + 2);
   _pf.LABEL(mklbl(lbl1 = lbl2));
+  bool elseHasReturn = _functionHasReturn;
+
+  _functionHasReturn = prev || (ifHasReturn && elseHasReturn);
 }
 
 //---------------------------------------------------------------------------
