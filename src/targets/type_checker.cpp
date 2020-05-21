@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include "targets/type_checker.h"
+#include "targets/return_verifier.h"
 #include "ast/all.h"  // automatically generated
 #include <cdk/types/basic_type.h>
 #include <cdk/types/primitive_type.h>
@@ -51,10 +52,7 @@ void og::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
 
 void og::type_checker::processUnaryExpression(cdk::unary_operation_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
-  if (!node->argument()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in argument of unary expression");
-
-  // in Simple, expressions are always int
-  node->type(cdk::make_primitive_type(4, cdk::TYPE_INT));
+  node->type(node->argument()->type());
 }
 
 void og::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
@@ -149,8 +147,9 @@ void og::type_checker::do_assignment_node(cdk::assignment_node *const node, int 
   } catch (const std::string &id) {
     auto symbol = std::make_shared<og::symbol>(-1, cdk::make_primitive_type(4, cdk::TYPE_INT), id, false, false);
     _symtab.insert(id, symbol);
-    _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
-    node->lvalue()->accept(this, lvl);  //DAVID: bah!
+    // advise parent that a symbol has been inserted
+    _parent->set_new_symbol(symbol);
+    node->lvalue()->accept(this, lvl);
   }
 
   node->rvalue()->accept(this, lvl);
@@ -165,12 +164,9 @@ void og::type_checker::do_assignment_node(cdk::assignment_node *const node, int 
       throw std::string("wrong assignment to integer");
   } else if (node->lvalue()->is_typed(cdk::TYPE_POINTER)) {
 
-//TODO: check pointer level
-
     if (node->rvalue()->is_typed(cdk::TYPE_POINTER)) {
       node->type(cdk::make_primitive_type(4, cdk::TYPE_POINTER));
     } else if (node->rvalue()->is_typed(cdk::TYPE_INT)) {
-      //TODO: check that the integer is a literal and that it is zero
       node->type(cdk::make_primitive_type(4, cdk::TYPE_POINTER));
     } else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
       node->type(cdk::make_primitive_type(4, cdk::TYPE_ERROR));
@@ -206,6 +202,7 @@ void og::type_checker::do_assignment_node(cdk::assignment_node *const node, int 
 //---------------------------------------------------------------------------
 
 void og::type_checker::do_function_declaration_node(og::function_declaration_node *const node, int lvl) {
+
   std::string label_name;
   if (!node->identifier().compare("og"))
     label_name = "_main";
@@ -213,15 +210,20 @@ void og::type_checker::do_function_declaration_node(og::function_declaration_nod
     label_name = "og";
   else label_name = node->identifier();
 
+  if (node->is_typed(cdk::TYPE_UNSPEC)) {
+    return_verifier lsc(_compiler, _symtab);
+    node->accept(&lsc, lvl);
+
+    if (lsc.return_type()) node->type(lsc.return_type());
+    else node->type(cdk::make_primitive_type(0, cdk::TYPE_VOID));
+  }
+
   std::shared_ptr<og::symbol> function = std::make_shared<og::symbol
       > (node->qualifier(), node->type(), label_name, false, true);
 
   std::shared_ptr<og::symbol> previous = _symtab.find(function->name());
-  if (previous) {
-    if (false /*DAVID: FIXME: should verify fields*/) {
-      throw std::string("conflicting declaration for '" + function->name() + "'");
-    }
-  } else {
+  if (previous) { /* empty */ } 
+  else {
     _symtab.insert(function->name(), function);
     _parent->set_new_symbol(function);
   }
@@ -270,6 +272,7 @@ void og::type_checker::do_continue_node(og::continue_node *const node, int lvl) 
 }
 void og::type_checker::do_function_invocation_node(og::function_invocation_node *const node, int lvl) {
   ASSERT_UNSPEC;
+
   const std::string &id = node->identifier();
   std::shared_ptr<og::symbol> symbol = _symtab.find(id);
 
@@ -292,8 +295,6 @@ void og::type_checker::do_allocation_node(og::allocation_node *const node, int l
 
   node->argument()->accept(this, lvl + 2);
   if (!node->argument()->is_typed(cdk::TYPE_INT)) throw std::string("integer expression expected in allocation expression");
-
-  //FIXME: check the following two lines
   node->type(cdk::make_reference_type(4, cdk::make_primitive_type(8, cdk::TYPE_DOUBLE)));
 }
 void og::type_checker::do_index_node(og::index_node *const node, int lvl) {
@@ -344,12 +345,10 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
       if (!node->expressions()->is_typed(cdk::TYPE_STRING)) throw std::string(
           "wrong type for initializer (string expected).");
     } else if (node->is_typed(cdk::TYPE_POINTER)) {
-      //DAVID: FIXME: trouble!!!
       if (!node->expressions()->is_typed(cdk::TYPE_POINTER)) throw std::string(
           "wrong type for initializer (pointer expected).");
     } else {
       node->type(node->expressions()->type());
-      //throw std::string("unknown type for initializer.");
     }
   }
 
@@ -358,7 +357,8 @@ void og::type_checker::do_var_declaration_node(og::var_declaration_node *const n
     const std::string &id = node->identifiers()->at(0);
     std::shared_ptr<og::symbol> symbol = std::make_shared<og::symbol> (node->qualifier(), node->type(), id, (bool)node->expressions(), false);
     if (_symtab.insert(id, symbol)) {
-      _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
+      // advise parent that a symbol has been inserted
+      _parent->set_new_symbol(symbol);
     } else {
       throw std::string("variable '" + id + "' redeclared");
     }

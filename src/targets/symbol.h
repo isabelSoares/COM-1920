@@ -14,8 +14,6 @@ namespace og {
     bool _initialized;
     bool _function;
     std::vector<std::shared_ptr<cdk::basic_type>> _arguments;
-    long _value = 0; // hack!
-  
     int _offset = 0; // 0 (zero) means global variable/function
     
   public:
@@ -56,12 +54,6 @@ namespace og {
     }
     bool isVariable() const {
       return !_function;
-    }
-    long value() const {
-      return _value;
-    }
-    long value(long v) {
-      return _value = v;
     }
     int offset() const {
       return _offset;
