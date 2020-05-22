@@ -315,6 +315,9 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
   if (node->block()){
     _functionHasReturn = false;
     _offset = 8;
+    if (_function->is_typed(cdk::TYPE_STRUCT))
+      _offset = 12; // Space for pointer of returning tuple
+
     _symtab.push();
 
     if (node->arguments()) {
@@ -334,7 +337,6 @@ void og::postfix_writer::do_function_declaration_node(og::function_declaration_n
     _pf.ALIGN();
     if (node->qualifier() == tPUBLIC) _pf.GLOBAL(_function->name(), _pf.FUNC());
     _pf.LABEL(_function->name());
-
     
     frame_size_calculator lsc(_compiler, _symtab);
     node->accept(&lsc, lvl);
@@ -572,8 +574,14 @@ void og::postfix_writer::do_return_node(og::return_node *const node, int lvl) {
       /* RETURN TUPLES */
       int local_offset = 0;
       auto struct_type = cdk::structured_type_cast(_function->type());
+      auto struct_type_return = cdk::structured_type_cast(node->return_value()->type());
       for (size_t actual = struct_type->length(); actual > 0; actual--) {
         auto component = struct_type->component(actual - 1);
+        auto component_return = struct_type_return->component(actual - 1);
+        
+        if (component->name() == cdk::TYPE_DOUBLE &&  component_return->name() == cdk::TYPE_INT)
+          _pf.I2D();
+
         _pf.LOCAL(8);
         _pf.LDINT();
         _pf.INT(local_offset);
