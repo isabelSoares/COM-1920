@@ -232,7 +232,35 @@ void og::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) 
   ASSERT_SAFE_EXPRESSIONS;
   node->lvalue()->accept(this, lvl);
   if (node->is_typed(cdk::TYPE_DOUBLE)) _pf.LDDOUBLE();
-  else {
+  else if (node->is_typed(cdk::TYPE_STRUCT)) {
+    // TUPLES
+    auto struct_type = cdk::structured_type_cast(node->type());
+    _pf.INT(node->type()->size());
+    _pf.ADD();
+    for (size_t actual = struct_type->length(); actual > 0; actual--) {
+      
+      auto component = struct_type->component(actual - 1);
+      if (component->name() == cdk::TYPE_DOUBLE) {
+        _pf.INT(- component->size());
+        _pf.ADD();
+        _pf.I2D();
+        _pf.DUP64();
+        _pf.D2I();
+        _pf.LDDOUBLE();
+        _pf.SWAP64();
+        _pf.D2I();
+      } else {
+        _pf.INT(- component->size());
+        _pf.ADD();
+        _pf.DUP32();
+        _pf.LDINT();
+        _pf.SWAP32();
+      }
+    }
+
+    _pf.TRASH(4);
+
+  } else {
     // integers, pointers, and strings
     _pf.LDINT();
   }
@@ -508,9 +536,11 @@ void og::postfix_writer::do_function_invocation_node(og::function_invocation_nod
   else if (symbol->is_typed(cdk::TYPE_STRUCT)) { 
     /* INVOCATION FUNCTION RETURNING TUPLES */
     int local_offset = symbol->type()->size();
+    
     auto struct_type = cdk::structured_type_cast(symbol->type());
     for (auto component : struct_type->components()) {
       local_offset -= component->size();
+      //std::cout << "(GET) local_offset: " << local_offset << " ; current_size: " << component->size() << std::endl;
       _pf.LDFVAL32();
       _pf.INT(local_offset);
       _pf.ADD();
@@ -518,6 +548,7 @@ void og::postfix_writer::do_function_invocation_node(og::function_invocation_nod
       if (component->name() == cdk::TYPE_INT || component->name() == cdk::TYPE_POINTER || component->name() == cdk::TYPE_STRING) _pf.LDINT();
       else if (component->name() == cdk::TYPE_DOUBLE) _pf.LDDOUBLE();
 
+      local_offset -= local_offset;
     }
   }
   else if (symbol->is_typed(cdk::TYPE_VOID)) { /* empty */ }
@@ -551,6 +582,7 @@ void og::postfix_writer::do_return_node(og::return_node *const node, int lvl) {
         if (component->name() == cdk::TYPE_INT || component->name() == cdk::TYPE_POINTER || component->name() == cdk::TYPE_STRING) _pf.STINT();
         else if (component->name() == cdk::TYPE_DOUBLE) _pf.STDOUBLE();
 
+        //std::cout << "(PUSH) local_offset: " << local_offset << " ; current_size: " << component->size() << std::endl;
         local_offset += component->size();
       }
 
